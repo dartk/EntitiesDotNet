@@ -6,47 +6,47 @@ namespace EntityComponentSystem.Tests;
 
 
 [GenerateImplicitOperators]
-public partial struct LocalTransform : IComponent {
+public partial struct LocalTransform {
     public Matrix4x4 Matrix;
 }
 
 
 [GenerateImplicitOperators]
-public partial struct Translation : IComponent {
+public partial struct Translation {
     public Vector3 Vector;
 }
 
 
 [GenerateImplicitOperators]
-public partial struct Velocity : IComponent {
+public partial struct Velocity {
     public Vector3 Vector;
 }
 
 
 [GenerateImplicitOperators]
-public partial struct Rotation : IComponent {
+public partial struct Rotation {
     public Quaternion Quaternion;
 }
 
 
 [GenerateImplicitOperators]
-public partial struct Scale : IComponent {
+public partial struct Scale {
     public Vector3 Vector;
 }
 
 
 [GenerateImplicitOperators]
-public partial struct WorldTransform : IComponent {
+public partial struct WorldTransform {
     public Matrix4x4 Matrix;
 }
 
 
-public struct Length : IComponent {
+public struct Length {
     public float Float;
 }
 
 
-public struct EntityId : IComponent {
+public struct EntityId {
     public int Id;
 }
 
