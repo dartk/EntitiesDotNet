@@ -8,52 +8,22 @@ namespace EntityComponentSystem.Tests;
 
 
 [GenerateImplicitOperators]
-public partial struct Width : IEquatable<Width> {
+public partial record struct Width {
     public float Float;
 
 
     public override string ToString() =>
         this.Float.ToString(CultureInfo.InvariantCulture);
-
-
-    public bool Equals(Width other) {
-        return this.Float.Equals(other.Float);
-    }
-
-
-    public override bool Equals(object? obj) {
-        return obj is Width other && Equals(other);
-    }
-
-
-    public override int GetHashCode() {
-        return this.Float.GetHashCode();
-    }
 }
 
 
 [GenerateImplicitOperators]
-public partial struct Height : IEquatable<Height> {
+public partial record struct Height {
     public float Float;
 
 
     public override string ToString() =>
         this.Float.ToString(CultureInfo.InvariantCulture);
-
-
-    public bool Equals(Height other) {
-        return this.Float.Equals(other.Float);
-    }
-
-
-    public override bool Equals(object? obj) {
-        return obj is Height other && Equals(other);
-    }
-
-
-    public override int GetHashCode() {
-        return this.Float.GetHashCode();
-    }
 }
 
 
@@ -118,8 +88,8 @@ public class ComponentArrayTests {
         Assert.Equal(new Height[] { 0, 3, 6, 9, 12 },
             array.GetReadOnlySpan<Height>().ToArray());
     }
-    
-    
+
+
     [Fact]
     public void FillArrayUsingQueryIndex() {
         var array = new ComponentArray(Archetype<Width, Height>.Instance);

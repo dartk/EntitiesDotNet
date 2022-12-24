@@ -42,7 +42,7 @@ public class
     ) {
         var semanticModel = context.SemanticModel;
         var attribute = (AttributeSyntax)context.Node;
-        var structSyntax = attribute.FirstAncestorOrSelf<StructDeclarationSyntax>();
+        var structSyntax = attribute.Parent?.Parent;
 
         if (
             structSyntax == null
@@ -54,7 +54,7 @@ public class
 
         var fieldSymbols = structSymbol
             .GetMembers()
-            .Where(x => x is IFieldSymbol)
+            .Where(x => x is IFieldSymbol && !x.IsImplicitlyDeclared)
             .Cast<IFieldSymbol>()
             .ToList();
 
@@ -65,11 +65,12 @@ public class
         var fieldSymbol = fieldSymbols.First();
 
         var structDeclarationSyntax = 
-            (StructDeclarationSyntax)structSymbol.DeclaringSyntaxReferences.First()
+            (TypeDeclarationSyntax)structSymbol.DeclaringSyntaxReferences.First()
                 .GetSyntax();
         var typeDeclaration =
             structDeclarationSyntax.Modifiers.ToFullString()
-            + structDeclarationSyntax.Keyword + " " + structDeclarationSyntax.Identifier;
+            + (structDeclarationSyntax is RecordDeclarationSyntax ? "record struct " : "struct " )
+            + structDeclarationSyntax.Identifier;
 
         return new Info(
             structSymbol.ContainingNamespace.ToDisplayString(),
