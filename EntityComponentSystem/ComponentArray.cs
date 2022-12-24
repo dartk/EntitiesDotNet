@@ -7,11 +7,11 @@ public class ComponentArray : IComponentArray {
     #region Public
 
 
-    public ComponentArray(int capacity) : this(Archetype.Empty, capacity) { }
+    public ComponentArray(int capacity = DefaultCapacity) : this(Archetype.Empty, capacity) { }
 
 
-    public ComponentArray(Archetype archetype, int capacity) {
-        this.Capacity = capacity;
+    public ComponentArray(Archetype archetype, int capacity = DefaultCapacity) {
+        this._capacity = capacity;
         this._archetype = archetype;
 
         var components = archetype.Components;
@@ -88,12 +88,12 @@ public class ComponentArray : IComponentArray {
 
 
     public ReadOnlySpan<T> GetReadOnlySpan<T>() {
-        return this.GetArray<T>();
+        return this.GetArray<T>().AsSpan(0, this.Count);
     }
 
 
     public Span<T> GetSpan<T>() {
-        return this.GetArray<T>();
+        return this.GetArray<T>().AsSpan(0, this.Count);
     }
 
 

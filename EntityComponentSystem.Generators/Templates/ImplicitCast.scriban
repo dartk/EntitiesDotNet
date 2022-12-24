@@ -1,6 +1,6 @@
 {{- for type in types }}
 namespace {{ type.namespace }} {
-{{- type.declaration }} {
+{{ type.declaration }} {
     public static implicit operator {{ type.field_type }}({{ type.name }} value) => value.{{ type.field_name }};
     public static implicit operator {{ type.name }}({{ type.field_type }} value) {
         var result = default({{ type.name }});

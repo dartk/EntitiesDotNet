@@ -87,6 +87,7 @@ public readonly struct {{ struct_name }}<{{ type_parameters_str_value }}> {
             {{- end }}
         }
     }
+    
 {{
         if read_count == count && count < type_parameters_count
             for extra_count in (count + 1)..type_parameters_count

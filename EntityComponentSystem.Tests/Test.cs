@@ -1,152 +1,144 @@
-﻿using System.Numerics;
+﻿using System.Globalization;
+using System.Numerics;
 using System.Runtime.CompilerServices;
+using Xunit.Abstractions;
 
 
 namespace EntityComponentSystem.Tests;
 
 
 [GenerateImplicitOperators]
-public partial struct LocalTransform {
-    public Matrix4x4 Matrix;
-}
-
-
-[GenerateImplicitOperators]
-public partial struct Translation {
-    public Vector3 Vector;
-}
-
-
-[GenerateImplicitOperators]
-public partial struct Velocity {
-    public Vector3 Vector;
-}
-
-
-[GenerateImplicitOperators]
-public partial struct Rotation {
-    public Quaternion Quaternion;
-}
-
-
-[GenerateImplicitOperators]
-public partial struct Scale {
-    public Vector3 Vector;
-}
-
-
-[GenerateImplicitOperators]
-public partial struct WorldTransform {
-    public Matrix4x4 Matrix;
-}
-
-
-public struct Length {
+public partial struct Width : IEquatable<Width> {
     public float Float;
-}
 
 
-public struct EntityId {
-    public int Id;
-}
+    public override string ToString() =>
+        this.Float.ToString(CultureInfo.InvariantCulture);
 
 
-public ref struct TRS {
-    public ref Translation Translation;
-    public ref Rotation Rotation;
-    public ref Scale Scale;
-    public ref LocalTransform Transform;
-
-    public static readonly SelectorClass Selector = new ();
-
-
-    public class SelectorClass {
+    public bool Equals(Width other) {
+        return this.Float.Equals(other.Float);
     }
 
 
-    public ref struct Array {
-        public TRS this[int index] => throw new NotImplementedException();
+    public override bool Equals(object? obj) {
+        return obj is Width other && Equals(other);
+    }
 
-        public Enumerator GetEnumerator() => new ();
 
-
-        public ref struct Enumerator {
-            public bool MoveNext() => throw new NotImplementedException();
-            public TRS Current => throw new NotImplementedException();
-        }
+    public override int GetHashCode() {
+        return this.Float.GetHashCode();
     }
 }
 
 
-public class ExcludeAttribute<T> : Attribute {
-}
+[GenerateImplicitOperators]
+public partial struct Height : IEquatable<Height> {
+    public float Float;
 
 
-public class IncludeAttribute<T> : Attribute {
-}
+    public override string ToString() =>
+        this.Float.ToString(CultureInfo.InvariantCulture);
 
 
-public class RefAttribute<T> : Attribute {
-}
+    public bool Equals(Height other) {
+        return this.Float.Equals(other.Float);
+    }
 
 
-public interface IComponentSystem {
-    void Execute();
-}
+    public override bool Equals(object? obj) {
+        return obj is Height other && Equals(other);
+    }
 
 
-public class World {
-}
-
-
-public interface ISomeInterface {
-
-}
-
-
-public abstract class ComponentBase {
-
-    public abstract void Execute();
-
-    protected IComponentArray Entities { get; }
-
+    public override int GetHashCode() {
+        return this.Float.GetHashCode();
+    }
 }
 
 
 [Query]
-[Exclude<WorldTransform>]
 public ref partial struct Query {
-    public ref readonly Translation Translation;
-    public ref readonly Rotation Rotation;
-    public ref readonly Scale Scale;
-    public ref LocalTransform Transform;
+    public ref Height Height;
+    public ref Width Width;
 }
 
 
-public static partial class TestSystem {
-
-
-    public static void Execute(IReadOnlyList<IComponentArray> entities) {
-        foreach (var array in entities) {
-            // array condition
-            var (count, translation, rotation, scale, transform) = array
-                .Read<Translation, Rotation, Scale>()
-                .Write<LocalTransform>();
-
-            for (var i = 0; i < count; ++i) {
-                transform[i] =
-                    Matrix4x4.CreateScale(scale[i])
-                    * Matrix4x4.CreateFromQuaternion(rotation[i])
-                    * Matrix4x4.CreateTranslation(translation[i]);
-            }
-        }
-
-        foreach (var entity in Query.Select(entities)) {
-            entity.Transform =
-                Matrix4x4.CreateScale(entity.Scale)
-                * Matrix4x4.CreateFromQuaternion(entity.Rotation)
-                * Matrix4x4.CreateTranslation(entity.Translation);
-        }
+public class ComponentArrayTests {
+    public ComponentArrayTests(ITestOutputHelper output) {
+        this.Output = output;
     }
 
+
+    public ITestOutputHelper Output { get; }
+
+
+    [Fact]
+    public void FillArrayUsingReadWrite() {
+        var array = new ComponentArray(Archetype<Width, Height>.Instance);
+        array.Add(5);
+
+        var (count, width, height) = array.Write<Width, Height>();
+
+        Assert.Equal(5, count);
+
+        for (var i = 0; i < count; ++i) {
+            width[i] = i * 2;
+            height[i] = i * 3;
+        }
+
+        this.Output.WriteLine(array.ToReadableString());
+
+        Assert.Equal(new Width[] { 0, 2, 4, 6, 8 },
+            array.GetReadOnlySpan<Width>().ToArray());
+
+        Assert.Equal(new Height[] { 0, 3, 6, 9, 12 },
+            array.GetReadOnlySpan<Height>().ToArray());
+    }
+
+
+    [Fact]
+    public void FillArrayUsingQueryForEach() {
+        var array = new ComponentArray(Archetype<Width, Height>.Instance);
+        array.Add(5);
+        Assert.Equal(5, array.Count);
+
+        var i = 0;
+        foreach (var item in Query.Select(array)) {
+            item.Width = i * 2;
+            item.Height = i * 3;
+            ++i;
+        }
+
+        this.Output.WriteLine(array.ToReadableString());
+
+        Assert.Equal(new Width[] { 0, 2, 4, 6, 8 },
+            array.GetReadOnlySpan<Width>().ToArray());
+
+        Assert.Equal(new Height[] { 0, 3, 6, 9, 12 },
+            array.GetReadOnlySpan<Height>().ToArray());
+    }
+    
+    
+    [Fact]
+    public void FillArrayUsingQueryIndex() {
+        var array = new ComponentArray(Archetype<Width, Height>.Instance);
+        array.Add(5);
+        Assert.Equal(5, array.Count);
+
+        var query = Query.Select(array);
+        for (var i = 0; i < query.Length; ++i) {
+            var item = query[i];
+            item.Width = i * 2;
+            item.Height = i * 3;
+        }
+
+        this.Output.WriteLine(array.ToReadableString());
+
+        Assert.Equal(new Width[] { 0, 2, 4, 6, 8 },
+            array.GetReadOnlySpan<Width>().ToArray());
+
+        Assert.Equal(new Height[] { 0, 3, 6, 9, 12 },
+            array.GetReadOnlySpan<Height>().ToArray());
+    }
 }
