@@ -5,42 +5,34 @@ using System.Runtime.CompilerServices;
 namespace EntityComponentSystem.Tests;
 
 
-public struct LocalTransform : IComponent {
-    public Matrix4x4 Matrix;
+
+public partial struct LocalTransform : IComponent {
+    [ImplicitCast] public Matrix4x4 Matrix;
 }
 
 
-public struct Translation : IComponent {
-    public Vector3 Vector;
+public partial struct Translation : IComponent {
+    [ImplicitCast] public Vector3 Vector;
 }
 
 
-public struct Velocity : IComponent {
-    public Vector3 Vector;
+public partial struct Velocity : IComponent {
+    [ImplicitCast] public Vector3 Vector;
 }
 
 
-public struct Rotation : IComponent {
-    public Quaternion Quaternion;
-
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator Quaternion(Rotation rotation) => rotation.Quaternion;
-
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator Rotation(Quaternion quaternion) =>
-        new Rotation { Quaternion = quaternion };
+public partial struct Rotation : IComponent {
+    [ImplicitCast] public Quaternion Quaternion;
 }
 
 
-public struct Scale : IComponent {
-    public Vector3 Vector;
+public partial struct Scale : IComponent {
+    [ImplicitCast] public Vector3 Vector;
 }
 
 
-public struct WorldTransform : IComponent {
-    public Matrix4x4 Matrix;
+public partial struct WorldTransform : IComponent {
+    [ImplicitCast] public Matrix4x4 Matrix;
 }
 
 
@@ -136,18 +128,18 @@ public static partial class TestSystem {
                 .Write<LocalTransform>();
 
             for (var i = 0; i < count; ++i) {
-                transform[i].Matrix =
-                    Matrix4x4.CreateScale(scale[i].Vector)
-                    * Matrix4x4.CreateFromQuaternion(rotation[i].Quaternion)
-                    * Matrix4x4.CreateTranslation(translation[i].Vector);
+                transform[i] =
+                    Matrix4x4.CreateScale(scale[i])
+                    * Matrix4x4.CreateFromQuaternion(rotation[i])
+                    * Matrix4x4.CreateTranslation(translation[i]);
             }
         }
 
         foreach (var entity in Query.Select(entities)) {
-            entity.Transform.Matrix =
-                Matrix4x4.CreateScale(entity.Scale.Vector)
-                * Matrix4x4.CreateFromQuaternion(entity.Rotation.Quaternion)
-                * Matrix4x4.CreateTranslation(entity.Translation.Vector);
+            entity.Transform =
+                Matrix4x4.CreateScale(entity.Scale)
+                * Matrix4x4.CreateFromQuaternion(entity.Rotation)
+                * Matrix4x4.CreateTranslation(entity.Translation);
         }
     }
 
