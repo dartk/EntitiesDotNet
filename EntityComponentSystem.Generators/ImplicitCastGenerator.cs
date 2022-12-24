@@ -13,8 +13,8 @@ public class
     private const string TemplateFileName = "ImplicitCast.scriban";
 
 
-    private const string ImplicitCast = nameof(ImplicitCast);
-    private const string ImplicitCastAttribute = nameof(ImplicitCastAttribute);
+    private const string GenerateImplicitOperators = nameof(GenerateImplicitOperators);
+    private const string GenerateImplicitOperatorsAttribute = nameof(GenerateImplicitOperatorsAttribute);
 
 
     public record Info(
@@ -32,7 +32,7 @@ public class
         }
 
         return attribute.Name.ExtractName()
-            is ImplicitCastAttribute or ImplicitCast;
+            is GenerateImplicitOperatorsAttribute or GenerateImplicitOperators;
     }
 
 
@@ -40,29 +40,31 @@ public class
         GeneratorSyntaxContext context,
         CancellationToken token
     ) {
-        using var log = File.CreateText(@"C:\Users\user\Desktop\tmp\out.txt");
-
         var semanticModel = context.SemanticModel;
         var attribute = (AttributeSyntax)context.Node;
+        var structSyntax = attribute.FirstAncestorOrSelf<StructDeclarationSyntax>();
 
         if (
-            semanticModel.GetEnclosingSymbol(attribute.SpanStart)
-            is not INamedTypeSymbol structSymbol
+            structSyntax == null
+            || semanticModel.GetDeclaredSymbol(structSyntax)
+                is not INamedTypeSymbol structSymbol
         ) {
             return null;
         }
 
-        var fieldDeclaration = attribute.FirstAncestorOrSelf<FieldDeclarationSyntax>();
-        if (fieldDeclaration == null) {
+        var fieldSymbols = structSymbol
+            .GetMembers()
+            .Where(x => x is IFieldSymbol)
+            .Cast<IFieldSymbol>()
+            .ToList();
+
+        if (fieldSymbols.Count != 1) {
             return null;
         }
 
-        var variableDeclaratorSyntax =(VariableDeclaratorSyntax)
-            fieldDeclaration.DescendantNodes().First(x => x is VariableDeclaratorSyntax);
+        var fieldSymbol = fieldSymbols.First();
 
-        var fieldSymbol = (IFieldSymbol)structSymbol.GetMembers(variableDeclaratorSyntax.ToFullString()).First();
-
-        var structDeclarationSyntax =
+        var structDeclarationSyntax = 
             (StructDeclarationSyntax)structSymbol.DeclaringSyntaxReferences.First()
                 .GetSyntax();
         var typeDeclaration =

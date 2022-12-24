@@ -5,34 +5,39 @@ using System.Runtime.CompilerServices;
 namespace EntityComponentSystem.Tests;
 
 
-
+[GenerateImplicitOperators]
 public partial struct LocalTransform : IComponent {
-    [ImplicitCast] public Matrix4x4 Matrix;
+    public Matrix4x4 Matrix;
 }
 
 
+[GenerateImplicitOperators]
 public partial struct Translation : IComponent {
-    [ImplicitCast] public Vector3 Vector;
+    public Vector3 Vector;
 }
 
 
+[GenerateImplicitOperators]
 public partial struct Velocity : IComponent {
-    [ImplicitCast] public Vector3 Vector;
+    public Vector3 Vector;
 }
 
 
+[GenerateImplicitOperators]
 public partial struct Rotation : IComponent {
-    [ImplicitCast] public Quaternion Quaternion;
+    public Quaternion Quaternion;
 }
 
 
+[GenerateImplicitOperators]
 public partial struct Scale : IComponent {
-    [ImplicitCast] public Vector3 Vector;
+    public Vector3 Vector;
 }
 
 
+[GenerateImplicitOperators]
 public partial struct WorldTransform : IComponent {
-    [ImplicitCast] public Matrix4x4 Matrix;
+    public Matrix4x4 Matrix;
 }
 
 
@@ -95,7 +100,7 @@ public class World {
 
 
 public interface ISomeInterface {
-    
+
 }
 
 
@@ -104,9 +109,10 @@ public abstract class ComponentBase {
     public abstract void Execute();
 
     protected IComponentArray Entities { get; }
-    
+
 }
-    
+
+
 [Query]
 [Exclude<WorldTransform>]
 public ref partial struct Query {
