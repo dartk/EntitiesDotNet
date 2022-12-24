@@ -1,0 +1,51 @@
+{{- include '_Global.scriban' -}}
+namespace {{ root_namespace }}; 
+
+
+{{- for count in 1..type_parameters_count }}
+{{- last_index = count - 1 }}
+
+
+public static class Archetype<{{ type_parameters_str count }}> {
+    
+    public static readonly Archetype Instance = Archetype.Instance(
+        {{- for i in 0..last_index }}
+        typeof(T{{ i }}) {{~ if i < last_index; ","; end }}
+        {{- end }}
+    );
+    
+}
+{{- end }}
+
+
+public partial class Archetype {
+
+{{- for count in 1..type_parameters_count }}
+{{- last_index = count - 1 }}
+
+    public static Archetype Instance<{{ type_parameters_str count }}>() =>
+        Archetype<{{ type_parameters_str count }}>.Instance;
+        
+        
+    public Archetype Add<{{ type_parameters_str count }}>() => this.Add(
+            {{- for i in 0..last_index }}
+            typeof(T{{ i }}) {{~ if i < last_index; ","; end }}
+            {{- end }}
+        );
+        
+        
+    public Archetype Remove<{{ type_parameters_str count }}>() => this.Remove(
+            {{- for i in 0..last_index }}
+            typeof(T{{ i }}) {{~ if i < last_index; ","; end }}
+            {{- end }}
+        );
+        
+        
+    public bool Contains<{{ type_parameters_str count }}>() =>
+        {{- for i in 0..last_index }}
+        {{ if i > 0; "&& "; end }}this.Contains(typeof(T{{ i }}))
+        {{- end }};
+    
+{{- end }}
+
+}

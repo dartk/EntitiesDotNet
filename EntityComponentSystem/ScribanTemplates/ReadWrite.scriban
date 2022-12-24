@@ -1,0 +1,118 @@
+{{- include '_Global.scriban' -}}
+using System.Diagnostics.Contracts;
+using {{ root_namespace }}.Accessors;
+
+
+namespace {{ root_namespace }} {
+
+public static partial class ComponentArrayExtensions {
+    
+{{ for count in 1..type_parameters_count
+    type_parameters_str_value = type_parameters_str count 
+}}
+    [Pure]
+    public static ComponentArray_{{ rw_suffix count count }}<{{ type_parameters_str_value }}> Read<{{ type_parameters_str_value }}>(this IComponentArray @this) => new (@this);
+    
+    [Pure]
+    public static ComponentArray_{{ rw_suffix count 0 }}<{{ type_parameters_str_value }}> Write<{{ type_parameters_str_value }}>(this IComponentArray @this) => new (@this);
+{{ end }}
+    
+}
+
+}
+
+
+namespace {{ root_namespace }}.Accessors {
+
+{{
+func AssignSpanVariables (count, readCount)
+    if readCount > 0
+        for $i in 0..(readCount - 1)
+    ~}}
+            span{{ $i }} = this.Array.GetReadOnlySpan<T{{ $i }}>();
+    {{~
+        end
+    end
+    
+    if readCount < count
+        for $i in readCount..(count - 1)
+    ~}}
+            span{{ $i }} = this.Array.GetSpan<T{{ $i }}>();
+    {{~
+        end
+    end
+end
+}}
+
+{{
+for count in 1..type_parameters_count
+    last_index = count - 1
+    for read_count in count..0
+        struct_name = "ComponentArray_" + (rw_suffix count read_count)
+        type_parameters_str_value = type_parameters_str count
+        spans = span_array count read_count
+}}
+public readonly struct {{ struct_name }}<{{ type_parameters_str_value }}> {
+
+    public {{ struct_name }}(IComponentArray array) {
+        this.Array = array;
+    }
+    
+    public readonly IComponentArray Array;
+
+    public void Deconstruct(out int count, {{ spans | array_map @(do; ret "out " + $0 + " span" + $1; end) | array.join ", " }}) {
+        if (this.Array.Archetype.Contains<{{ type_parameters_str count }}>()) {
+            count = this.Array.Count;
+            {{- for $i in 0..last_index }}
+            span{{ $i }} = this.Array.Get{{ spans[$i] }}();
+            {{- end }}
+        }
+        else {
+            count = 0;
+            {{- for $i in 0..last_index }}
+            span{{ $i }} = default;
+            {{- end }}
+        }
+    }
+
+    public void Deconstruct({{ spans | array_map @(do; ret "out " + $0 + " span" + $1; end) | array.join ", " }}) {
+        if (this.Array.Archetype.Contains<{{ type_parameters_str count }}>()) {
+            {{- for $i in 0..last_index }}
+            span{{ $i }} = this.Array.Get{{ spans[$i] }}();
+            {{- end }}
+        }
+        else {
+            {{- for $i in 0..last_index }}
+            span{{ $i }} = default;
+            {{- end }}
+        }
+    }
+{{
+        if read_count == count && count < type_parameters_count
+            for extra_count in (count + 1)..type_parameters_count
+}}
+    [Pure]
+    public ComponentArray_{{ rw_suffix extra_count extra_count }}<{{ type_parameters_str extra_count }}> Read<{{ type_parameters_str_offset (extra_count - count) count }}>() => new (this.Array);
+{{
+            end
+        end
+}}
+{{
+        if count < type_parameters_count
+            for extra_count in (count + 1)..type_parameters_count
+                extra_write_count = read_count + extra_count
+}}
+    [Pure]
+    public ComponentArray_{{ rw_suffix extra_count read_count }}<{{ type_parameters_str extra_count }}> Write<{{ type_parameters_str_offset (extra_count - count) count }}>() => new (this.Array);
+{{
+            end
+        end
+}}
+}
+
+{{
+    end
+end
+}}
+
+}

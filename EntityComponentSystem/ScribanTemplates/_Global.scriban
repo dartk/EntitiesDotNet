@@ -1,0 +1,112 @@
+{{ # This file contains global definitions to include in other templates
+
+root_namespace = "EntityComponentSystem"
+type_parameters_count = 8
+
+# Creates string "T0, T1, T2, ... Tn"
+func type_parameters_str (parameterCount)
+    if parameterCount <= 0
+        ret
+    end
+    
+    $result = ""
+    for $i in 0..(parameterCount - 1)
+        if $i > 0
+            $result = $result + ", "
+        end
+        $result = $result + "T" + $i
+    end
+    
+    ret $result
+end
+
+
+# Creates string "Tn, Tn+1, ... Tm"
+func type_parameters_str_offset (parameterCount, offset)
+    if parameterCount <= 0
+        ret
+    end
+    
+    $result = ""
+    for $i in 0..(parameterCount - 1)
+        if $i > 0
+            $result = $result + ", "
+        end
+        $result = $result + "T" + ($i + offset)
+    end
+    
+    ret $result
+end
+
+
+# Creates string "RR...RWW...W", readCount 'R' and (parameterCount - readCount) 'W'
+func rw_suffix (parameterCount, readCount)
+    $suffix = ""
+    if readCount > 0
+        for $i in 1..readCount
+            $suffix += "R"
+        end
+    end
+    
+    $writeCount = parameterCount - readCount
+    if $writeCount > 0
+        for $i in 1..$writeCount
+            $suffix += "W"
+        end
+    end
+    
+    ret $suffix
+end
+
+
+func span_array (count, read_count)
+    $spans = []
+    if count == 0
+        ret $spans
+    end
+    
+    for $i in 0..(count - 1)
+        $spans[$i] = ($i < read_count ? "ReadOnly" : "") + "Span<T" + $i + ">";
+    end
+    
+    ret $spans
+end
+
+
+func array_map (arr, func)
+    $result = []
+    
+    if (array.size arr) == 0
+        ret $result
+    end
+    
+    for $i in 0..((array.size arr) - 1)
+        $result[$i] = func (arr[$i]) $i
+    end
+    
+    ret $result
+end
+
+
+# Creates string "out ReadOnlySpan<T0> span0, ..., out ReadOnlySpan<Tn> span(n), out Span<Tn+1> span(n+1), ..., out Span<Tm> span(m)"
+func OutSpanFuncArgs (count, readCount)
+    if readCount > 0
+        for $i in 0..(readCount - 1)
+            if $i > 0; ", "; end 
+            -}}
+            out ReadOnlySpan<T{{ $i }}> span{{ $i }}
+            {{-
+        end
+    end
+
+    if readCount < count
+        for $i in readCount..(count - 1)
+            if $i > 0; ", "; end 
+            -}}
+            out Span<T{{ $i }}> span{{ $i }}
+            {{-
+        end
+    end
+end
+
+-}}
