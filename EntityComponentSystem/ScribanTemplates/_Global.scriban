@@ -109,4 +109,20 @@ func OutSpanFuncArgs (count, readCount)
     end
 end
 
+func read_write_call (read_components, write_components)
+    if (array.size read_components) > 0
+        $read_components_str = ".Read<" + (read_components | array.join ", ") + ">()"
+    else
+        $read_components_str = ""
+    end
+    
+    if (array.size write_components) > 0
+        $write_components_str = ".Write<" + (write_components | array.join ", ") + ">()"
+    else
+        $write_components_str = ""
+    end
+    
+    ret $read_read_components_str + $write_components_str
+end
+
 -}}

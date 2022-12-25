@@ -1,0 +1,90 @@
+{{- include '_Global.scriban' -}}
+using {{ root_namespace }}.Delegates;
+
+
+namespace {{ root_namespace }};
+
+
+public static partial class ComponentArrayExtensions {
+
+{{-
+
+func RefFuncArgumentList (count, readCount)
+    if readCount > 0
+        for $i in 0..(readCount - 1)
+    if $i > 0; ", "; end
+    -}}
+        span{{ $i }}[i]
+    {{-
+        end
+    end
+    if readCount < count
+        for $i in readCount..(count - 1)
+    if $i > 0; ", "; end
+    -}}
+        ref span{{ $i }}[i]
+    {{-
+        end
+    end
+end
+
+
+for $count in 1..type_parameters_count
+    $type_parameters_str = type_parameters_str $count
+    for $read_count in $count..0
+        $suffix = rw_suffix $count $read_count
+        
+        $read_components = []
+        if $read_count > 0
+            for $i in 0..($read_count - 1)
+                $read_components[$i] = "T" + $i
+            end
+        end
+        
+        $write_components = []
+        $write_count = $count - $read_count
+        if $write_count > 0
+            for $i in 0..($write_count - 1)
+                $write_components[$i] = "T" + ($read_count + $i)
+            end
+        end
+        
+        $read_write_call = read_write_call $read_components $write_components
+}}
+    
+    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, RefFunc_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+        if (!@this.Archetype.Contains<{{ $type_parameters_str }}>()) {
+            return;
+        }
+        
+        var count = @this.Count;
+        {{- for $i in 0..($count - 1) }}
+        var span{{ $i }} = @this.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<T{{ $i }}>();
+        {{- end }}
+        
+        for (var i = 0; i < count; ++i) {
+            func({{~ RefFuncArgumentList $count $read_count ~}});
+        }
+    }
+    
+    
+    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, RefFunc_I_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+        if (!@this.Archetype.Contains<{{ $type_parameters_str }}>()) {
+            return;
+        }
+        
+        var count = @this.Count;
+        {{- for $i in 0..($count - 1) }}
+        var span{{ $i }} = @this.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<T{{ $i }}>();
+        {{- end }}
+        
+        for (var i = 0; i < count; ++i) {
+            func(i, {{~ RefFuncArgumentList $count $read_count ~}});
+        }
+    }
+    
+{{-
+    end
+end
+}}
+}

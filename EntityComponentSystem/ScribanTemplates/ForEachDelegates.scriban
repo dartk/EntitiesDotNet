@@ -1,0 +1,62 @@
+{{- include '_Global.scriban' -}}
+
+
+namespace {{ root_namespace }}.Delegates;
+
+{{
+
+func RefFuncDefinitionArgs (count, readCount)
+    $result = ""
+    
+    if readCount > 0
+        for $i in 0..(readCount - 1)
+            if $i > 0; $result += ", "; end 
+            $result += "in T" + $i + " arg" + $i
+        end
+    end
+
+    if readCount < count
+        for $i in readCount..(count - 1)
+            if $i > 0; $result += ", "; end 
+            $result += "ref T" + $i + " arg" + $i
+        end
+    end
+    
+    ret $result
+end
+
+
+func SpanFuncDefinitionArgs (count, readCount)
+    $result = ""
+    
+    if readCount > 0
+        for $i in 0..(readCount - 1)
+            if $i > 0; $result += ", "; end 
+            $result += "ReadOnlySpan<T" + $i + "> span" + $i
+        end
+    end
+
+    if readCount < count
+        for $i in readCount..(count - 1)
+            if $i > 0; $result += ", "; end 
+            $result += "Span<T" + $i + "> span" + $i
+        end
+    end
+    
+    ret $result
+end
+
+
+for $count in 1..type_parameters_count
+    $type_params = type_parameters_str $count
+    for $read_count in $count..0
+        $write_count = $count - $read_count
+        $suffix = rw_suffix $count $read_count
+        $args = RefFuncDefinitionArgs $count $read_count
+}}
+public delegate void RefFunc_{{ $suffix }}<{{ $type_params }}>({{ $args }});
+public delegate void RefFunc_I_{{ $suffix }}<{{ $type_params }}>(int index, {{ $args }});
+{{-
+    end
+end
+~}}
