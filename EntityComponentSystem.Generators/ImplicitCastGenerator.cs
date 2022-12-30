@@ -65,7 +65,7 @@ public class
         var fieldSymbol = fieldSymbols.First();
 
         var structDeclarationSyntax = 
-            (TypeDeclarationSyntax)structSymbol.DeclaringSyntaxReferences.First()
+            (Microsoft.CodeAnalysis.CSharp.Syntax.TypeDeclarationSyntax)structSymbol.DeclaringSyntaxReferences.First()
                 .GetSyntax();
         var typeDeclaration =
             structDeclarationSyntax.Modifiers.ToFullString()
