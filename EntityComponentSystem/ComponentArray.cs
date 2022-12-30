@@ -1,7 +1,7 @@
 ﻿namespace EntityComponentSystem;
 
 
-public class ComponentArray : IComponentArray {
+public partial class ComponentArray : IComponentArray {
 
 
     #region Public

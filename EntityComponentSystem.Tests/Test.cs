@@ -45,7 +45,7 @@ public class ComponentArrayTests {
 
     [Fact]
     public void FillArrayUsingReadWrite() {
-        var array = new ComponentArray(Archetype<Width, Height>.Instance);
+        var array = ComponentArray.Create<Width, Height>();
         array.Add(5);
 
         var (count, width, height) = array.Write<Width, Height>();

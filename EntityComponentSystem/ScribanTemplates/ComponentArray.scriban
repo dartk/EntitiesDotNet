@@ -1,0 +1,12 @@
+﻿{{- include '_Global.scriban' -}}
+namespace {{ root_namespace }}; 
+
+
+public partial class ComponentArray {
+    {{- for $count in 1..(type_parameters_count - 1) }}
+    
+    public static ComponentArray Create<{{ type_parameters_str $count }}>(int capacity = 4) =>
+        new (Archetype<{{ type_parameters_str $count }}>.Instance, capacity);
+    {{- end }}
+    
+}
