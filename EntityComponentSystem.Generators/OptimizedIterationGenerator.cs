@@ -235,19 +235,13 @@ public class OptimizedIterationGenerator :
         var _count = {{arrayName}}.Count;
         {{
             string.Join(" ", readComponents.Select(
-                    x => $"ref var _{x.Identifier}_start = ref System.Runtime.InteropServices.MemoryMarshal.GetReference({arrayName}.GetReadOnlySpan<{x.Type}>());")
+                    x => $"ref var {x.Identifier} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference({arrayName}.GetReadOnlySpan<{x.Type}>());")
                 .Concat(writeComponents.Select(
-                    x => $"ref var _{x.Identifier}_start = ref System.Runtime.InteropServices.MemoryMarshal.GetReference({arrayName}.GetSpan<{x.Type}>());")))
+                    x => $"ref var {x.Identifier} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference({arrayName}.GetSpan<{x.Type}>());")))
         }}
 
         for (var _i = 0; _i < _count; ++_i) {
             {{( indexName != null ? $"var {indexName} = _i;" : "")}}
-            {{
-                string.Join(" ", readComponents.Select(
-                        x => $"ref var {x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref _{x.Identifier}_start, _i);")
-                    .Concat(writeComponents.Select(
-                        x => $"ref var {x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref _{x.Identifier}_start, _i);")))
-            }}
 
             #region Body
 
@@ -258,6 +252,13 @@ public class OptimizedIterationGenerator :
             )}}
 
             #endregion
+
+            {{
+                string.Join(" ", readComponents.Select(
+                        x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);")
+                    .Concat(writeComponents.Select(
+                        x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);")))
+            }}
         }
     }
 """;

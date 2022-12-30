@@ -181,9 +181,29 @@ public partial class IterationBenchmark {
 
 
     [Benchmark]
-    public void GeneratedFromForEach() {
+    public void GeneratedFromStruct() {
         var generated = new GeneratedIteration();
         generated.IterationExpression_Generated(this._array);
+    }
+
+
+    [Benchmark]
+    public void GeneratedFromMethod() {
+        Process_Optimized(this._array);
+    }
+
+
+    [GenerateOptimized]
+    private static void Process(IComponentArray array) {
+        array.ForEach((ref Translation translation) =>
+            translation.Vector = Vector3.Zero
+        );
+
+        var deltaTime = 1f / 60f;
+
+        array.ForEach((in Velocity velocity, ref Translation translation) =>
+            translation.Vector += velocity.Vector * deltaTime
+        );
     }
 
 
