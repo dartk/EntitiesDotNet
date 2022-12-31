@@ -4,9 +4,23 @@ namespace {{ root_namespace }};
 
 public partial class ComponentArray {
     {{- for $count in 1..(type_parameters_count - 1) }}
+    {{- $last_index = $count - 1 }}
+    {{- $type_parameters_str = type_parameters_str $count }}
     
-    public static ComponentArray Create<{{ type_parameters_str $count }}>(int capacity = 4) =>
-        new (Archetype<{{ type_parameters_str $count }}>.Instance, capacity);
+    public static ComponentArray Create<{{ $type_parameters_str }}>(int capacity = 4) =>
+        new (Archetype<{{ $type_parameters_str }}>.Instance, capacity);
+    
+    
+    public void Add<{{ $type_parameters_str }}>({{ array_create 0 $count | array_map @(do; ret string_format "in T{0} component{0}" $0; end) | array.join ", " }}) {
+        this.Add(1);
+        var index = this.Count - 1;
+        {{- for $i in 0..$last_index }}
+        
+        var span{{ $i }} = this.GetSpan<T{{ $i }}>();
+        span{{ $i }}[index] = component{{ $i }};
+        {{- end }}
+    }
+    
     {{- end }}
     
 }

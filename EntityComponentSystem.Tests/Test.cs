@@ -44,6 +44,21 @@ public class ComponentArrayTests {
 
 
     [Fact]
+    public void ArrayAddTest() {
+        var array = ComponentArray.Create<Width, Height>();
+        for (var i = 0; i < 3; ++i) {
+            array.Add(new Width { Float = i * 2 }, new Height { Float = i * 3 });
+        }
+
+        Assert.Equal(3, array.Count);
+        Assert.Equal(new Width[] { 0, 2, 4 },
+            array.GetReadOnlySpan<Width>().ToArray());
+        Assert.Equal(new Height[] { 0, 3, 6 },
+            array.GetReadOnlySpan<Height>().ToArray());
+    }
+
+
+    [Fact]
     public void FillArrayUsingReadWrite() {
         var array = ComponentArray.Create<Width, Height>();
         array.Add(5);
