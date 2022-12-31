@@ -62,6 +62,17 @@ public partial class Archetype {
     }
 
 
+    public bool Contains(Archetype archetype) {
+        foreach (var component in archetype.Components) {
+            if (!this.Contains(component)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
     public Archetype Add(IEnumerable<Type> components) {
         return Instance(this._components.Concat(components));
     }
