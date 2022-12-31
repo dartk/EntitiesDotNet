@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 
 
@@ -32,11 +31,11 @@ internal ref partial struct ResetTranslationQuery {
 }
 
 
-// [SimpleJob(launchCount: 2, warmupCount: 5, targetCount: 5, invocationCount: 5)]
+// [SimpleJob(launchCount: 5, warmupCount: 10, targetCount: 10, invocationCount: 10)]
 [MemoryDiagnoser]
 public partial class IterationBenchmark {
 
-    [Params(1_000, 10_000, 100_000)]
+    [Params(10_000, 100_000)]
     public int N;
 
 
@@ -68,7 +67,7 @@ public partial class IterationBenchmark {
     }
 
 
-    [Benchmark]
+    // [Benchmark]
     public void QueryIndex() {
         var deltaTime = 1f / 60f;
 
@@ -92,33 +91,29 @@ public partial class IterationBenchmark {
     }
 
 
-    // [Benchmark]
-    public void ReadWrite() {
-        var deltaTime = 1f / 60f;
-
-        var (count, velocity, translation) =
-            this._array.Read<Velocity>().Write<Translation>();
-
-        for (var i = 0; i < count; ++i) {
-            translation[i] += deltaTime * velocity[i].Vector;
-        }
-    }
-
-
-    // [Benchmark]
-    public void ReadWriteNoCasting() {
-        var deltaTime = 1f / 60f;
-
-        var (count, velocity, translation) =
-            this._array.Read<Velocity>().Write<Translation>();
-
-        for (var i = 0; i < count; ++i) {
-            translation[i].Vector += deltaTime * velocity[i].Vector;
-        }
-    }
-
-
     [Benchmark]
+    public void ReadWrite() {
+        {
+            var translations = this._array.GetSpan<Translation>();
+            foreach (ref var translation in translations) {
+                translation.Vector = Vector3.Zero;
+            }
+        }
+
+        {
+            var deltaTime = 1f / 60f;
+            
+            var (count, velocity, translation) =
+                this._array.Read<Velocity>().Write<Translation>();
+
+            for (var i = 0; i < count; ++i) {
+                translation[i].Vector += deltaTime * velocity[i].Vector;
+            }
+        }
+    }
+
+
+    // [Benchmark]
     public void ForEach() {
         this._array.ForEach((ref Translation translation) => {
             translation.Vector = Vector3.Zero;
@@ -131,7 +126,7 @@ public partial class IterationBenchmark {
     }
 
 
-    [Benchmark]
+    // [Benchmark]
     public void Manual() {
         {
             if (!this._array.Archetype.Contains<Translation>()) {
@@ -162,31 +157,6 @@ public partial class IterationBenchmark {
     }
 
 
-    [GenerateIteration]
-    private partial struct GeneratedIteration : IComponentArrayIterationExpression {
-
-        public void IterationExpression(IComponentArray array) {
-            array.ForEach((ref Translation translation) =>
-                translation.Vector = Vector3.Zero
-            );
-
-            var deltaTime = 1f / 60f;
-
-            array.ForEach((in Velocity velocity, ref Translation translation) =>
-                translation.Vector += velocity.Vector * deltaTime
-            );
-        }
-
-    }
-
-
-    [Benchmark]
-    public void GeneratedFromStruct() {
-        var generated = new GeneratedIteration();
-        generated.IterationExpression_Generated(this._array);
-    }
-
-
     [Benchmark]
     public void GeneratedFromMethod() {
         Process_Optimized(this._array);
@@ -205,7 +175,7 @@ public partial class IterationBenchmark {
             translation.Vector += velocity.Vector * deltaTime
         );
     }
-
+    
 
     private IComponentArray _array;
 }
