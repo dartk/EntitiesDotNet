@@ -3,6 +3,55 @@
 root_namespace = "EntityComponentSystem"
 type_parameters_count = 8
 
+
+func string_format (format, args...)
+    if !args
+        ret format
+    end
+    
+    $result = format
+
+    $size = array.size args
+    $i = -1
+    while ++$i < $size
+        $result = $result | string.replace ("{" + $i + "}") (args[$i])
+    end
+    
+    ret $result
+end
+
+
+func array_create (start_index, count)
+    if count < 0
+        ret null
+    end
+    
+    $result = []
+    if count == 0
+        ret $result
+    end
+    
+    for $i in 0..(count - 1)
+        $result[$i] = start_index + $i
+    end
+    
+    ret $result
+end
+
+
+func array_map (arr, func)
+    $result = []
+    
+    $size = array.size arr
+    $i = -1
+    while (++$i) < $size
+        $result[$i] = func (arr[$i]) $i
+    end
+    
+    ret $result
+end
+
+
 # Creates string "T0, T1, T2, ... Tn"
 func type_parameters_str (parameterCount)
     if parameterCount <= 0
@@ -73,21 +122,6 @@ func span_array (count, read_count)
 end
 
 
-func array_map (arr, func)
-    $result = []
-    
-    if (array.size arr) == 0
-        ret $result
-    end
-    
-    for $i in 0..((array.size arr) - 1)
-        $result[$i] = func (arr[$i]) $i
-    end
-    
-    ret $result
-end
-
-
 # Creates string "out ReadOnlySpan<T0> span0, ..., out ReadOnlySpan<Tn> span(n), out Span<Tn+1> span(n+1), ..., out Span<Tm> span(m)"
 func OutSpanFuncArgs (count, readCount)
     if readCount > 0
@@ -108,6 +142,7 @@ func OutSpanFuncArgs (count, readCount)
         end
     end
 end
+
 
 func read_write_call (read_components, write_components)
     if (array.size read_components) > 0
