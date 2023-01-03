@@ -13,6 +13,11 @@ public struct Z {
 }
 
 
+public record struct SharedX(int Int);
+public record struct SharedY(int Int);
+public record struct SharedZ(int Int);
+
+
 public class ArchetypeTests {
 
     [Fact]
@@ -63,7 +68,7 @@ public class ArchetypeTests {
         var x = Archetype.Instance(typeof(X));
         var xy = Archetype.Instance(typeof(X), typeof(Y));
         var xyz = Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
-
+        
         Assert.StrictEqual(xy, x.Add(typeof(Y)));
         Assert.StrictEqual(xy, x.Add(typeof(Y)));
         Assert.StrictEqual(xyz, xyz.Add(typeof(X), typeof(Y)));
@@ -82,6 +87,22 @@ public class ArchetypeTests {
         Assert.StrictEqual(xy, xyz.Remove(typeof(Z)));
         Assert.StrictEqual(yz, xyz.Remove(typeof(X)));
         Assert.StrictEqual(x, xyz.Remove(typeof(Y), typeof(Z)));
+    }
+
+
+    [Fact]
+    public void SharedComponentTests() {
+        var xy = Archetype.Instance<X, Y>();
+        var xyWithSharedX10 = Archetype.Instance<X, Y>().AddShared(SharedComponent.Instance(new SharedX(10)));
+        var xyWithSharedX20 = Archetype.Instance<X, Y>().AddShared(SharedComponent.Instance(new SharedX(20)));
+        var xyWithSharedX10_2 = Archetype.Instance<X, Y>().AddSharedValue(new SharedX(10), new SharedX(10));
+        var xyWithSharedX10_X11 = Archetype.Instance<X, Y>().AddSharedValue(new SharedX(10), new SharedX(11));
+
+        Assert.NotStrictEqual(xy, xyWithSharedX10);
+        Assert.NotStrictEqual(xy, xyWithSharedX20);
+        Assert.NotStrictEqual(xyWithSharedX10, xyWithSharedX20);
+        Assert.StrictEqual(xyWithSharedX10, xyWithSharedX10_2);
+        Assert.NotStrictEqual(xyWithSharedX10, xyWithSharedX10_X11);
     }
 
 }

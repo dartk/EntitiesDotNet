@@ -11,12 +11,15 @@ public partial class Archetype {
 
 
     public static Archetype Instance(params Type[] components) {
-        return Instance(components.AsEnumerable());
+        return Instance(components.AsEnumerable(), null);
     }
 
 
-    public static Archetype Instance(IEnumerable<Type> components) {
-        var newArchetype = new Archetype(components);
+    public static Archetype Instance(
+        IEnumerable<Type> components,
+        IEnumerable<ISharedComponent>? sharedComponents
+    ) {
+        var newArchetype = new Archetype(components, sharedComponents);
         lock (Archetypes) {
             var index = Archetypes.BinarySearch(newArchetype, ArchetypeComparer.Instance);
             if (index >= 0) {
@@ -33,7 +36,7 @@ public partial class Archetype {
 
     static Archetype() {
         Archetypes = new List<Archetype>();
-        Empty = Instance(Array.Empty<Type>());
+        Empty = Instance(Array.Empty<Type>(), null);
     }
 
 
@@ -43,22 +46,35 @@ public partial class Archetype {
     private static readonly List<Archetype> Archetypes;
 
 
-    private Archetype(IEnumerable<Type> components) :
-        this(components.Distinct().ToArray()) {
-    }
+    private Archetype(
+        IEnumerable<Type> components,
+        IEnumerable<ISharedComponent>? sharedComponents
+    ) {
+        var componentsArray = components.Distinct().ToArray();
+        var sharedComponentsArray =
+            sharedComponents?.Distinct().ToArray()
+            ?? Array.Empty<ISharedComponent>();
 
+        Array.Sort(componentsArray, ComponentComparer.Instance);
+        Array.Sort(sharedComponentsArray, SharedComponentComparer.Instance);
 
-    private Archetype(Type[] components) {
-        Array.Sort(components, ComponentComparer.Instance);
-        this._components = components;
+        this._components = componentsArray;
+        this._sharedComponents = sharedComponentsArray;
     }
 
 
     public ReadOnlySpan<Type> Components => this._components;
+    public ReadOnlySpan<ISharedComponent> SharedComponents => this._sharedComponents;
 
 
     public bool Contains(Type component) {
         return this.GetIndex(component) >= 0;
+    }
+
+
+    public bool Contains(ISharedComponent sharedComponent) {
+        return Array.BinarySearch(this._sharedComponents, sharedComponent,
+            SharedComponentComparer.Instance) >= 0;
     }
 
 
@@ -69,12 +85,18 @@ public partial class Archetype {
             }
         }
 
+        foreach (var sharedComponent in archetype.SharedComponents) {
+            if (!this.Contains(sharedComponent)) {
+                return false;
+            }
+        }
+
         return true;
     }
 
 
     public Archetype Add(IEnumerable<Type> components) {
-        return Instance(this._components.Concat(components));
+        return Instance(this._components.Concat(components), this._sharedComponents);
     }
 
 
@@ -83,25 +105,67 @@ public partial class Archetype {
     }
 
 
+    public Archetype AddShared(IEnumerable<ISharedComponent> sharedComponents) {
+        return Instance(this._components,
+            this._sharedComponents.Concat(sharedComponents));
+    }
+
+
+    public Archetype AddShared(params ISharedComponent[] sharedComponents) {
+        return this.AddShared(sharedComponents.AsEnumerable());
+    }
+
+
     public Archetype Remove(params Type[] components) {
-        var newFields = new List<Type>(this._components.Length);
+        var newComponents = new List<Type>(this._components.Length);
 
         Array.Sort(components, ComponentComparer.Instance);
 
         foreach (var component in this._components) {
-            if (Array.BinarySearch(components, component, ComponentComparer.Instance) <
-                0) {
-                newFields.Add(component);
+            if (
+                Array.BinarySearch(components, component, ComponentComparer.Instance) < 0
+            ) {
+                newComponents.Add(component);
             }
         }
 
-        return Instance(newFields);
+        return Instance(newComponents, this._sharedComponents);
+    }
+
+
+    public Archetype Remove(params ISharedComponent[] sharedComponents) {
+        var newSharedComponents =
+            new List<ISharedComponent>(this._sharedComponents.Length);
+
+        Array.Sort(sharedComponents, SharedComponentComparer.Instance);
+
+        foreach (var sharedComponent in this._sharedComponents) {
+            if (Array.BinarySearch(sharedComponents, sharedComponent,
+                    SharedComponentComparer.Instance) < 0
+            ) {
+                newSharedComponents.Add(sharedComponent);
+            }
+        }
+
+        return Instance(this._components, newSharedComponents);
     }
 
 
     public int GetIndex(Type component) {
         return Array.BinarySearch(this._components, component,
             ComponentComparer.Instance);
+    }
+
+
+    public override string ToString() {
+        var components = string.Join<Type>(", ", this._components);
+        var sharedComponents =
+            string.Join<ISharedComponent>(", ", this._sharedComponents);
+
+        var allComponents = string.Join(", ",
+            new[] { components, sharedComponents }.Where(x => !string.IsNullOrEmpty(x)));
+
+        return $"Archetype {{ {allComponents} }}";
     }
 
 
@@ -112,6 +176,7 @@ public partial class Archetype {
 
 
     private readonly Type[] _components;
+    private readonly ISharedComponent[] _sharedComponents;
 
 
     private class ComponentComparer : IComparer<Type> {
@@ -135,6 +200,27 @@ public partial class Archetype {
     }
 
 
+    private class SharedComponentComparer : IComparer<ISharedComponent> {
+
+        // ReSharper disable once MemberHidesStaticFromOuterClass
+        public static readonly SharedComponentComparer Instance = new ();
+
+
+        private SharedComponentComparer() {
+        }
+
+
+        public int Compare(ISharedComponent x, ISharedComponent y) {
+            if (ReferenceEquals(x, y)) return 0;
+            if (ReferenceEquals(null, y)) return 1;
+            if (ReferenceEquals(null, x)) return -1;
+
+            return x.Id.CompareTo(y.Id);
+        }
+
+    }
+
+
     private class ArchetypeComparer : IComparer<Archetype> {
 
         // ReSharper disable once MemberHidesStaticFromOuterClass
@@ -145,23 +231,33 @@ public partial class Archetype {
         }
 
 
-        public int Compare(Archetype xArchetype, Archetype yArchetype) {
-            var fieldComparer = ComponentComparer.Instance;
-            var xFields = xArchetype.Components;
-            var yFields = yArchetype.Components;
+        public int Compare(Archetype archetypeX, Archetype archetypeY) {
+            return CompareComponents(archetypeX.Components, archetypeY.Components)
+                switch {
+                    0 => CompareSharedComponents(
+                        archetypeX.SharedComponents,
+                        archetypeY.SharedComponents),
+                    var result => result
+                };
+        }
 
-            if (xFields.Length < yFields.Length) {
+
+        private static int CompareComponents(
+            ReadOnlySpan<Type> componentsX,
+            ReadOnlySpan<Type> componentsY
+        ) {
+            if (componentsX.Length < componentsY.Length) {
                 return -1;
             }
-            else if (xFields.Length > yFields.Length) {
+            else if (componentsX.Length > componentsY.Length) {
                 return 1;
             }
 
-            var length = xFields.Length;
+            var length = componentsX.Length;
             for (var i = 0; i < length; ++i) {
-                var x = xFields[i];
-                var y = yFields[i];
-                var result = fieldComparer.Compare(x, y);
+                var x = componentsX[i];
+                var y = componentsY[i];
+                var result = ComponentComparer.Instance.Compare(x, y);
                 if (result != 0) {
                     return result;
                 }
@@ -170,6 +266,30 @@ public partial class Archetype {
             return 0;
         }
 
+
+        private static int CompareSharedComponents(
+            ReadOnlySpan<ISharedComponent> componentsX,
+            ReadOnlySpan<ISharedComponent> componentsY
+        ) {
+            if (componentsX.Length < componentsY.Length) {
+                return -1;
+            }
+            else if (componentsX.Length > componentsY.Length) {
+                return 1;
+            }
+
+            var length = componentsX.Length;
+            for (var i = 0; i < length; ++i) {
+                var x = componentsX[i];
+                var y = componentsY[i];
+                var result = SharedComponentComparer.Instance.Compare(x, y);
+                if (result != 0) {
+                    return result;
+                }
+            }
+
+            return 0;
+        }
     }
 
 

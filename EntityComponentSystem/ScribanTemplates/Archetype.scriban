@@ -40,6 +40,27 @@ public partial class Archetype {
             {{- end }}
         );
         
+    
+    public Archetype AddSharedValue<
+        {{-
+            array_create 0 count |
+            array_map @(do; ret "T" + $0; end) |
+            array.join ", "
+        -}}
+    >(
+        {{-
+            array_create 0 count |
+                array_map @(do; ret string_format "T{0} sharedComponent{0}" $0; end) |
+                array.join ", "
+        -}}
+    ) => this.AddShared(
+        {{-
+            array_create 0 count |
+                array_map @(do; ret string_format "SharedComponent.Instance(sharedComponent{0})" $0; end) |
+                array.join ", "
+        -}}
+    );
+        
         
     public bool Contains<{{ type_parameters_str count }}>() =>
         {{- for i in 0..last_index }}
