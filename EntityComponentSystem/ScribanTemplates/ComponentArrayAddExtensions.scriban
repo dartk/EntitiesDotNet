@@ -1,0 +1,20 @@
+{{- include '_Global.scriban' -}}
+namespace {{ root_namespace }};
+
+
+public static partial class ComponentArrayExtensions {
+    {{- for $count in 1..(type_parameters_count - 1) }}
+    {{- $last_index = $count - 1 }}
+    {{- $type_parameters_str = type_parameters_str $count }}
+    
+    public static void Add<{{ $type_parameters_str }}>(this IComponentArray @this, {{ array_create 0 $count | array_map @(do; ret string_format "in T{0} component{0}" $0; end) | array.join ", " }}) {
+        @this.Add(1);
+        var index = @this.Count - 1;
+        {{- for $i in 0..$last_index }}
+        
+        var span{{ $i }} = @this.GetSpan<T{{ $i }}>();
+        span{{ $i }}[index] = component{{ $i }};
+        {{- end }}
+    }
+    {{- end }}
+}

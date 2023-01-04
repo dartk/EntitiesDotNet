@@ -87,6 +87,20 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
+    public void Remove(int count = 1) {
+        if (this.Count <= count) {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        var newCount = this.Count - count;
+        foreach (var array in this._arrays) {
+            Array.Clear(array, newCount, count);
+        }
+
+        this.Count = newCount;
+    }
+
+
     public ReadOnlySpan<T> GetReadOnlySpan<T>() {
         return this.GetArray<T>().AsSpan(0, this.Count);
     }

@@ -50,7 +50,7 @@ public partial class Archetype {
         IEnumerable<Type> components,
         IEnumerable<ISharedComponent>? sharedComponents
     ) {
-        var componentsArray = components.Distinct().ToArray();
+        var componentsArray = components.Append(typeof(EntityId)).Distinct().ToArray();
         var sharedComponentsArray =
             sharedComponents?.Distinct().ToArray()
             ?? Array.Empty<ISharedComponent>();
