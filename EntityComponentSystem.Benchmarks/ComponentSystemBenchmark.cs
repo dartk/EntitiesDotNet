@@ -7,19 +7,25 @@ namespace EntityComponentSystem.Benchmarks;
 
 public partial class ComponentSystemBenchmark {
 
-    [Params(100_000, 10_000_000)]
+    [Params(10_000_000)]
     public int N { get; set; }
 
 
     [GlobalSetup]
     public void Setup() {
         var entityManager = new EntityManager();
-        var random = new Random(0);
+        var array = entityManager.GetArray(Archetype<Translation, Velocity>.Instance);
+        array.EnsureCapacity(this.N);
+        
         for (var i = 0; i < this.N; ++i) {
-            entityManager.CreateEntity(
-                new Translation { Vector = new Vector3(random.NextSingle()) },
-                new Velocity { Vector = new Vector3(random.NextSingle()) }
-            );
+            entityManager.CreateEntity(Archetype<Translation, Velocity>.Instance);
+        }
+        
+        var random = new Random(0);
+        var (count, translations, velocities) = array.Write<Translation, Velocity>();
+        for (var i = 0; i < count; ++i) {
+            translations[i].Vector = new Vector3(random.NextSingle());
+            velocities[i].Vector = new Vector3(random.NextSingle());
         }
 
         this._system = entityManager.CreateSystem<BenchmarkSystem>();

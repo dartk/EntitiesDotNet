@@ -10,7 +10,7 @@ public partial class EntityManager {
         var archetype = Archetype<{{ $type_parameters_str }}>.Instance;
         var entity = this.CreateEntity(archetype);
         {{- for $i in 0..($count - 1) }}
-        entity.Ref<T{{ $i }}>() = component{{ $i }};
+        entity.RefRW<T{{ $i }}>() = component{{ $i }};
         {{- end }}
         return entity;
     }

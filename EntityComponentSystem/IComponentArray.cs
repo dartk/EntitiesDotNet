@@ -13,4 +13,6 @@ public interface IComponentArray {
     object? GetValue(Type component, int index);
     void SetValue(Type component, int index, object? value);
     void Clear(int index, int length);
+    int Capacity { get; set; }
+    void EnsureCapacity(int capacity);
 }

@@ -194,6 +194,18 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
+    public void EnsureCapacity(int min) {
+        if (this.Capacity >= min) {
+            return;
+        }
+
+        var newCapacity = this.Capacity != 0 ? this.Capacity * 2 : DefaultCapacity;
+        newCapacity = Math.Max(Math.Min(newCapacity, MaxArrayLength), min);
+
+        this.Capacity = newCapacity;
+    }
+
+
     #endregion
 
 
@@ -207,18 +219,6 @@ public partial class ComponentArray : IComponentArray {
     private Archetype _archetype;
     private Array[] _arrays;
     private int _capacity;
-
-
-    private void EnsureCapacity(int min) {
-        if (this.Capacity >= min) {
-            return;
-        }
-
-        var newCapacity = this.Capacity != 0 ? this.Capacity * 2 : DefaultCapacity;
-        newCapacity = Math.Max(Math.Min(newCapacity, MaxArrayLength), min);
-
-        this.Capacity = newCapacity;
-    }
 
 
     internal bool TryGetArray(Type component, out Array components) {

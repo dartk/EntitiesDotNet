@@ -1,9 +1,20 @@
 ﻿namespace EntityComponentSystem;
 
 
-public readonly record struct Entity(EntityManager EntityManager, int Id) : IDisposable {
-    public readonly int Id = Id;
-    public readonly EntityManager EntityManager = EntityManager;
+public readonly record struct Entity : IDisposable {
+
+    public Entity(EntityManager entityManager, EntityId id) {
+        this.Id = id;
+        this.EntityManager = entityManager;
+        entityManager.GetEntityLocation(id, out this._array, out this._index);
+    }
+
+
+    public readonly EntityId Id;
+    public readonly EntityManager EntityManager;
+
+    private readonly IComponentArray _array;
+    private readonly int _index;
 
 
     public void Dispose() {
@@ -11,29 +22,26 @@ public readonly record struct Entity(EntityManager EntityManager, int Id) : IDis
     }
 
 
-    public EntityLocation GetLocation() => this.EntityManager.GetEntityLocation(this.Id);
-
-
-    public ref T Ref<T>() {
-        var (array, index) = this.GetLocation();
-        return ref array.GetSpan<T>()[index];
+    public ref T RefRW<T>() {
+        return ref this._array.GetSpan<T>()[this._index];
     }
 
 
-    public ref readonly T RefReadonly<T>() {
-        var (array, index) = this.GetLocation();
-        return ref array.GetReadOnlySpan<T>()[index];
+    public ref readonly T RefRO<T>() {
+        return ref this._array.GetReadOnlySpan<T>()[this._index];
     }
 
 
-    public static implicit operator EntityId(Entity entity) => new (entity.Id);
+    public static implicit operator EntityId(Entity entity) => entity.Id;
 }
 
 
-public readonly record struct EntityId(int Id) {
+public readonly record struct EntityId(int Id, int Version) {
     public readonly int Id = Id;
+    public readonly int Version = Version;
+
 
     public override string ToString() {
-        return this.Id.ToString();
+        return $"{this.Id}.v{this.Version}";
     }
 }

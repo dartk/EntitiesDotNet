@@ -18,43 +18,85 @@ public partial class EntityManager {
 
     public Entity CreateEntity(Archetype archetype) {
         var array = (ComponentArray)this.GetArray(archetype);
-        var entityId = this._nextEntityId++;
+
+        int entityId;
+        if (this._deadEntityIndices.Count > 0) {
+            entityId = this._deadEntityIndices.Dequeue();
+        }
+        else {
+            entityId = this._entityInfoArray.Count;
+            this._entityInfoArray.Add(default);
+        }
+
         var index = array.Count;
+
+        ref var entityInfo = ref this._entityInfoArray[entityId];
+        entityInfo.Array = array;
+        entityInfo.Index = index;
+        entityInfo.Version++;
 
         if (array.Count == 0) {
             this.IncreaseVersion();
         }
 
-        array.Add(new EntityId(entityId));
-
-        var location = new EntityLocation(array, index);
-
-        this._entityLocationById[entityId] = location;
-        return new Entity(this, entityId);
+        array.Add(new EntityId(entityInfo.Index, entityInfo.Version));
+        return new Entity(this, new EntityId(entityId, entityInfo.Version));
     }
 
 
     public void DestroyEntity(EntityId entity) {
-        if (!this._entityLocationById.TryGetValue(entity.Id, out var location)) {
-            throw new InvalidOperationException($"Entity #{entity.Id} does not exist.");
+        if (entity.Id >= this._entityInfoArray.Count) {
+            throw new InvalidOperationException($"Entity [{entity}] does not exist.");
         }
 
-        var (array, index) = location;
-        ComponentArray.CopyTo(array, array.Count - 1, array, index, 1);
-        array.Remove();
+        ref var entityInfo = ref this._entityInfoArray[entity.Id];
+        if (entityInfo.Array == null) {
+            throw new InvalidOperationException($"Entity [{entity}] was destroyed.");
+        }
+
+        var array = entityInfo.Array;
+        var index = entityInfo.Index;
+
+        if (index == array.Count - 1) {
+            array.Remove();
+        }
+        else {
+            ComponentArray.CopyTo(array, array.Count - 1, array, index, 1);
+            var movedEntityId = array.GetReadOnlySpan<EntityId>()[index].Id;
+            this._entityInfoArray[movedEntityId].Index = index;
+        }
 
         if (array.Count == 0) {
             this.IncreaseVersion();
         }
+
+        entityInfo.Array = null;
+        this._deadEntityIndices.Enqueue(entityInfo.Index);
     }
 
 
-    public EntityLocation GetEntityLocation(EntityId entityId) =>
-        this._entityLocationById[entityId.Id];
+    public EntityLocation GetEntityLocation(EntityId entityId) {
+        this.GetEntityLocation(entityId, out var array, out var index);
+        return new EntityLocation(array, index);
+    }
 
 
-    internal EntityLocation GetEntityLocation(int entityId) =>
-        this._entityLocationById[entityId];
+    public void GetEntityLocation(
+        EntityId entityId, out IComponentArray array, out int index
+    ) {
+        ref var info = ref this._entityInfoArray[entityId.Id];
+        if (info.Version != entityId.Version) {
+            throw new ArgumentException(
+                $"Wrong entity [{entityId.Id}] version. Expected: {info.Version}. Actual: {entityId.Version}");
+        }
+
+        if (info.Array == null) {
+            throw new ArgumentException($"Entity [{entityId}] was destroyed.");
+        }
+
+        array = info.Array;
+        index = info.Index;
+    }
 
 
     public IComponentArray GetArray(Archetype archetype) {
@@ -88,7 +130,6 @@ public partial class EntityManager {
 
     public TSystem CreateSystem<TSystem>()
         where TSystem : ComponentSystem, new() {
-
         var system = new TSystem();
         system.Init(this);
         return system;
@@ -105,12 +146,19 @@ public partial class EntityManager {
         _arrayByArchetype = new ();
 
 
-    private readonly Dictionary<int, EntityLocation> _entityLocationById = new ();
-    private int _nextEntityId;
+    private readonly ResizableArray<EntityInfo> _entityInfoArray = new ();
+    private readonly Queue<int> _deadEntityIndices = new ();
 
 
     private void IncreaseVersion() {
         ++this.Version;
+    }
+
+
+    private struct EntityInfo {
+        public int Version;
+        public ComponentArray? Array;
+        public int Index;
     }
 
 
