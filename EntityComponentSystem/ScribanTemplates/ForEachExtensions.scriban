@@ -83,6 +83,43 @@ for $count in 1..type_parameters_count
         }
     }
     
+    
+    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, RefFunc_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+        foreach (var array in @this) {
+            if (!array.Archetype.Contains<{{ $type_parameters_str }}>()) {
+                continue;
+            }
+            
+            var count = array.Count;
+            {{- for $i in 0..($count - 1) }}
+            var span{{ $i }} = array.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<T{{ $i }}>();
+            {{- end }}
+            
+            for (var i = 0; i < count; ++i) {
+                func({{~ RefFuncArgumentList $count $read_count ~}});
+            }
+        }
+    }
+    
+    
+    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, RefFunc_I_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+        var index = 0;
+        foreach (var array in @this) {
+            if (!array.Archetype.Contains<{{ $type_parameters_str }}>()) {
+                continue;
+            }
+            
+            var count = array.Count;
+            {{- for $i in 0..($count - 1) }}
+            var span{{ $i }} = array.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<T{{ $i }}>();
+            {{- end }}
+            
+            for (var i = 0; i < count; ++i) {
+                func(index++, {{~ RefFuncArgumentList $count $read_count ~}});
+            }
+        }
+    }
+    
 {{-
     end
 end

@@ -158,7 +158,7 @@ public partial class Archetype {
 
 
     public override string ToString() {
-        var components = string.Join<Type>(", ", this._components);
+        var components = string.Join(", ", this._components.Select(x => x.Name));
         var sharedComponents =
             string.Join<ISharedComponent>(", ", this._sharedComponents);
 

@@ -6,13 +6,25 @@ namespace EntityComponentSystem;
 
 public partial class EntityManager {
 
-    public ReadOnlySpan<IComponentArray> Arrays => this._arrays;
+    public EntityManager() {
+        this._arrays = new ResizableArray<IComponentArray>();
+        this.Entities = this._arrays;
+    }
+
+
+    public readonly ReadOnlyArray<IComponentArray> Entities;
+    public int Version { get; private set; }
 
 
     public Entity CreateEntity(Archetype archetype) {
         var array = (ComponentArray)this.GetArray(archetype);
         var entityId = this._nextEntityId++;
         var index = array.Count;
+        
+        if (array.Count == 0) {
+            this.IncreaseVersion();
+        }
+        
         array.Add(new EntityId(entityId));
 
         var location = new EntityLocation(array, index);
@@ -29,6 +41,11 @@ public partial class EntityManager {
 
         var (array, index) = location;
         ComponentArray.CopyTo(array, array.Count - 1, array, index, 1);
+        array.Remove();
+
+        if (array.Count == 0) {
+            this.IncreaseVersion();
+        }
     }
 
 
@@ -48,6 +65,7 @@ public partial class EntityManager {
         array = new ComponentArray(archetype);
         this._arrayByArchetype[archetype] = array;
         this._arrays.Add(array);
+        this.IncreaseVersion();
 
         return array;
     }
@@ -71,7 +89,7 @@ public partial class EntityManager {
     #region Private
 
 
-    private readonly ResizableArray<IComponentArray> _arrays = new ();
+    private readonly ResizableArray<IComponentArray> _arrays;
 
 
     private readonly Dictionary<Archetype, IComponentArray>
@@ -80,6 +98,11 @@ public partial class EntityManager {
 
     private readonly Dictionary<int, EntityLocation> _entityLocationById = new ();
     private int _nextEntityId;
+
+
+    private void IncreaseVersion() {
+        ++this.Version;
+    }
 
 
     #endregion

@@ -20,7 +20,7 @@ public class SharedComponent<T> : ISharedComponent {
 
 
     public override string ToString() {
-        return $"{this.Type} = {this.Value}";
+        return $"{this.Type.Name} = {this.Value}";
     }
 
 
