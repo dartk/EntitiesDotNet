@@ -95,28 +95,28 @@ public partial class Archetype {
     }
 
 
-    public Archetype Add(IEnumerable<Type> components) {
+    public Archetype With(IEnumerable<Type> components) {
         return Instance(this._components.Concat(components), this._sharedComponents);
     }
 
 
-    public Archetype Add(params Type[] components) {
-        return this.Add(components.AsEnumerable());
+    public Archetype With(params Type[] components) {
+        return this.With(components.AsEnumerable());
     }
 
 
-    public Archetype AddShared(IEnumerable<ISharedComponent> sharedComponents) {
+    public Archetype With(IEnumerable<ISharedComponent> sharedComponents) {
         return Instance(this._components,
             this._sharedComponents.Concat(sharedComponents));
     }
 
 
-    public Archetype AddShared(params ISharedComponent[] sharedComponents) {
-        return this.AddShared(sharedComponents.AsEnumerable());
+    public Archetype With(params ISharedComponent[] sharedComponents) {
+        return this.With(sharedComponents.AsEnumerable());
     }
 
 
-    public Archetype Remove(params Type[] components) {
+    public Archetype Without(params Type[] components) {
         var newComponents = new List<Type>(this._components.Length);
 
         Array.Sort(components, ComponentComparer.Instance);
@@ -133,7 +133,7 @@ public partial class Archetype {
     }
 
 
-    public Archetype Remove(params ISharedComponent[] sharedComponents) {
+    public Archetype Without(params ISharedComponent[] sharedComponents) {
         var newSharedComponents =
             new List<ISharedComponent>(this._sharedComponents.Length);
 

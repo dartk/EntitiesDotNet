@@ -34,8 +34,8 @@ public class ComponentSystemsTests {
             );
         }
 
-        entityManager.CreateEntity(Archetype.Instance<int>().AddSharedValue(false));
-        entityManager.CreateEntity(Archetype.Instance<int>().AddSharedValue(true));
+        entityManager.CreateEntity(Archetype.Instance<int>().WithShared(false));
+        entityManager.CreateEntity(Archetype.Instance<int>().WithShared(true));
 
         var system = new TestSystem(this.Output, entityManager);
         system.Execute();
