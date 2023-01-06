@@ -161,9 +161,7 @@ public class ComponentSystemGenerator :
                 lastPosition, statement.SpanStart - methodBlock.SpanStart);
             var text = blockText.ToString(span);
             source.AppendLine(text);
-            source.AppendLine("#region ForEach");
             source.AppendLine(GenerateOptimizedForEach(invocation, $"__cache{i}"));
-            source.AppendLine("#endregion");
 
             lastPosition = statement.Span.End - methodBlock.SpanStart;
         }
@@ -214,7 +212,7 @@ public class ComponentSystemGenerator :
         foreach (var whereLambda in whereLambdas) {
             predicateList.Add(whereLambda.Lambda);
         }
-
+        
         return $$"""
 this.{{cacheName}} ??= new {{nameof(EntityQueryCache)}}(
     this.EntityManager,
@@ -230,9 +228,7 @@ foreach (var __array in this.{{cacheName}}) {
     for (var __i = 0; __i < __count; ++__i) {
         {{(foreachInfo.IndexArgName != null ? $"var {foreachInfo.IndexArgName} = __i;" : "")}}
 
-        #region Body
         {{foreachInfo.Body}}
-        #endregion
 
         {{string.Join(Environment.NewLine, foreachInfo.Components.Select(
             x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);"))}}
@@ -245,7 +241,8 @@ foreach (var __array in this.{{cacheName}}) {
     private record ForEachInfo(
         string? IndexArgName,
         IReadOnlyList<ForEachArgInfo> Components,
-        string Body
+        string Body,
+        int LineStart
     ) {
 
         public IEnumerable<ForEachArgInfo> ReadComponents =>
@@ -265,8 +262,12 @@ foreach (var __array in this.{{cacheName}}) {
                 .First();
 
             string lambdaBodyStr;
+            int lineStart;
+            var tree = lambda.SyntaxTree;
             if (lambda.ExpressionBody != null) {
                 lambdaBodyStr = lambda.ExpressionBody + ";";
+                var lineSpan = tree.GetMappedLineSpan(lambda.ExpressionBody.Span);
+                lineStart = lineSpan.StartLinePosition.Line;
             }
             else {
                 if (
@@ -280,6 +281,8 @@ foreach (var __array in this.{{cacheName}}) {
                 }
 
                 lambdaBodyStr = lambda.Block!.ToString();
+                var lineSpan = tree.GetMappedLineSpan(lambda.Block.Span);
+                lineStart = lineSpan.StartLinePosition.Line;
             }
 
             var lambdaParameters = lambda.ParameterList.Parameters;
@@ -312,7 +315,7 @@ foreach (var __array in this.{{cacheName}}) {
                 }
             }
 
-            return new ForEachInfo(indexName, components, lambdaBodyStr);
+            return new ForEachInfo(indexName, components, lambdaBodyStr, lineStart);
         }
     }
 
