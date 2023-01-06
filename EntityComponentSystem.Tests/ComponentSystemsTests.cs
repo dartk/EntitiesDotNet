@@ -37,26 +37,25 @@ public class ComponentSystemsTests {
         entityManager.CreateEntity(Archetype.Instance<int>().AddSharedValue(false));
         entityManager.CreateEntity(Archetype.Instance<int>().AddSharedValue(true));
 
-        var system = new TestSystem(this.Output);
-        system.Initialize(entityManager);
-
-        system.OnExecute();
+        var system = new TestSystem(this.Output, entityManager);
+        system.Execute();
     }
 }
 
 
 public partial class TestSystem : ComponentSystem {
 
-    public TestSystem(ITestOutputHelper output) {
+    public TestSystem(ITestOutputHelper output, EntityManager em) {
         this.Output = output;
+        this.Init(em);
     }
 
 
     public ITestOutputHelper Output { get; }
 
 
-    [OptimizeExecuteMethod]
-    protected override void Execute() {
+    [GenerateOnExecute]
+    protected override void OnExecute() {
         var deltaTime = 1f / 60f;
         this.Entities.ForEach(
             (in Velocity velocity, ref Translation translation) => {

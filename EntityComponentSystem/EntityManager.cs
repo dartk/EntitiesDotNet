@@ -20,11 +20,11 @@ public partial class EntityManager {
         var array = (ComponentArray)this.GetArray(archetype);
         var entityId = this._nextEntityId++;
         var index = array.Count;
-        
+
         if (array.Count == 0) {
             this.IncreaseVersion();
         }
-        
+
         array.Add(new EntityId(entityId));
 
         var location = new EntityLocation(array, index);
@@ -83,6 +83,15 @@ public partial class EntityManager {
         }
 
         return builder.ToString();
+    }
+
+
+    public TSystem CreateSystem<TSystem>()
+        where TSystem : ComponentSystem, new() {
+
+        var system = new TSystem();
+        system.Init(this);
+        return system;
     }
 
 

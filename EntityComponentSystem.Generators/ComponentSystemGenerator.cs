@@ -15,8 +15,11 @@ namespace EntityComponentSystem.Generators;
 public class ComponentSystemGenerator :
     IncrementalGeneratorBase<ComponentSystemGenerator.Info> {
 
-    private const string OptimizeExecuteMethod = nameof(OptimizeExecuteMethod);
-    private const string OptimizeExecuteMethodAttribute = nameof(EntityComponentSystem.OptimizeExecuteMethodAttribute);
+    private const string GenerateOnExecute = nameof(GenerateOnExecute);
+
+
+    private const string GenerateOnExecuteAttribute =
+        nameof(EntityComponentSystem.GenerateOnExecute);
 
 
     public record Info(string FileName, string Source);
@@ -28,7 +31,7 @@ public class ComponentSystemGenerator :
         }
 
         return attributeSyntax.Name.ExtractName()
-            is OptimizeExecuteMethod or OptimizeExecuteMethodAttribute;
+            is GenerateOnExecute or GenerateOnExecuteAttribute;
     }
 
 
@@ -146,8 +149,27 @@ public class ComponentSystemGenerator :
             source.AppendLine($"private {nameof(EntityQueryCache)} __cache{i};");
         }
 
+        var filters = new List<WhereLambdaInfo>[forEachInvocations.Count];
+        var foreachInfos = new ForEachInfo[forEachInvocations.Count];
+
         source.AppendLine();
-        source.AppendLine(@"void IComponentSystem_Generated.Execute()");
+        source.AppendLine("void IComponentSystem_Generated.OnInit() {");
+        for (var i = 0; i < forEachInvocations.Count; ++i) {
+            var invocation = forEachInvocations[i];
+            var filterList = WhereLambdaInfo.FromExpression(invocation.Expression);
+            var foreachInfo = ForEachInfo.FromSyntax(invocation);
+
+            filters[i] = filterList;
+            foreachInfos[i] = foreachInfo;
+
+            source.AppendLine(
+                GenerateCacheInitialization(foreachInfo, filterList, CacheName(i)));
+        }
+
+        source.AppendLine("}");
+
+        source.AppendLine();
+        source.AppendLine(@"void IComponentSystem_Generated.OnExecute()");
 
         var blockText = methodBlock.GetText();
         var lastPosition = 0;
@@ -161,7 +183,8 @@ public class ComponentSystemGenerator :
                 lastPosition, statement.SpanStart - methodBlock.SpanStart);
             var text = blockText.ToString(span);
             source.AppendLine(text);
-            source.AppendLine(GenerateOptimizedForEach(invocation, $"__cache{i}"));
+            source.AppendLine(
+                GenerateOptimizedForEach(foreachInfos[i], filters[i], CacheName(i)));
 
             lastPosition = statement.Span.End - methodBlock.SpanStart;
         }
@@ -171,6 +194,33 @@ public class ComponentSystemGenerator :
         source.AppendLine("}");
 
         return source.ToString();
+    }
+
+
+    private static string CacheName(int i) => "__cache" + i;
+
+
+    private static string GenerateCacheInitialization(
+        ForEachInfo info, List<WhereLambdaInfo> filters, string cacheName
+    ) {
+        // "T0, T1, ..."
+        var componentTypesStr =
+            string.Join(", ", info.Components.Select(x => x.Type));
+
+        var predicateList = new List<string> {
+            $"array => array.Archetype.Contains<{componentTypesStr}>()"
+        };
+
+        foreach (var filter in filters) {
+            predicateList.Add(filter.Lambda);
+        }
+
+        return $$"""
+this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
+    this.EntityManager,
+    {{string.Join("," + Environment.NewLine, predicateList)}}
+);
+""";
     }
 
 
@@ -196,11 +246,8 @@ public class ComponentSystemGenerator :
 
 
     private static string GenerateOptimizedForEach(
-        InvocationExpressionSyntax foreachInvocation, string cacheName
+        ForEachInfo foreachInfo, List<WhereLambdaInfo> whereLambdas, string cacheName
     ) {
-        var whereLambdas = WhereLambdaInfo.FromExpression(foreachInvocation.Expression);
-        var foreachInfo = ForEachInfo.FromSyntax(foreachInvocation);
-
         // "T0, T1, ..."
         var componentTypesStr =
             string.Join(", ", foreachInfo.Components.Select(x => x.Type));
@@ -212,29 +259,25 @@ public class ComponentSystemGenerator :
         foreach (var whereLambda in whereLambdas) {
             predicateList.Add(whereLambda.Lambda);
         }
-        
+
         return $$"""
-this.{{cacheName}} ??= new {{nameof(EntityQueryCache)}}(
-    this.EntityManager,
-    {{string.Join("," + Environment.NewLine, predicateList)}}
-);
-this.{{cacheName}}.Update();
+        this.{{cacheName}}.Update();
 
-foreach (var __array in this.{{cacheName}}) {
-    var __count = __array.Count;
-    {{string.Join(Environment.NewLine, foreachInfo.Components.Select(x =>
-        $"ref var {x.Identifier} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.Get{(x.IsReadOnly ? "ReadOnly" : "")}Span<{x.Type}>());"))}}
+        foreach (var __array in this.{{cacheName}}) {
+            var __count = __array.Count;
+            {{string.Join(Environment.NewLine, foreachInfo.Components.Select(x =>
+                $"ref var {x.Identifier} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.Get{(x.IsReadOnly ? "ReadOnly" : "")}Span<{x.Type}>());"))}}
 
-    for (var __i = 0; __i < __count; ++__i) {
-        {{(foreachInfo.IndexArgName != null ? $"var {foreachInfo.IndexArgName} = __i;" : "")}}
+            for (var __i = 0; __i < __count; ++__i) {
+                {{(foreachInfo.IndexArgName != null ? $"var {foreachInfo.IndexArgName} = __i;" : "")}}
 
-        {{foreachInfo.Body}}
+                {{foreachInfo.Body}}
 
-        {{string.Join(Environment.NewLine, foreachInfo.Components.Select(
-            x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);"))}}
-    }
-}
-""";
+                {{string.Join(Environment.NewLine, foreachInfo.Components.Select(
+                    x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);"))}}
+            }
+        }
+        """;
     }
 
 

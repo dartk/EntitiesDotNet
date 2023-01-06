@@ -4,6 +4,7 @@
 public abstract class ComponentSystem {
 
     public ComponentSystem() {
+        // ReSharper disable once SuspiciousTypeConversion.Global
         this._generated = this as IComponentSystem_Generated;
     }
 
@@ -11,30 +12,27 @@ public abstract class ComponentSystem {
     public EntityManager EntityManager => this._entityManager!;
 
 
-    public void Initialize(EntityManager entityManager) {
-        this._entityManager = entityManager;
-    }
-
-
-    public void OnStart() {
-        if (this._entityManager == null) {
-            throw new NullReferenceException(
-                $"{nameof(ComponentSystem)} is not initialized.");
+    public void Init(EntityManager entityManager) {
+        if (this._entityManager != null) {
+            throw new InvalidOperationException("Already initialized.");
         }
+
+        this._entityManager = entityManager;
+        this._generated?.OnInit();
     }
 
 
-    public void OnExecute() {
+    public void Execute() {
         if (this._generated != null) {
-            this._generated.Execute();
+            this._generated.OnExecute();
             return;
         }
 
-        this.Execute();
+        this.OnExecute();
     }
 
 
-    protected abstract void Execute();
+    protected abstract void OnExecute();
 
 
     protected ReadOnlyArray<IComponentArray> Entities => this.EntityManager.Entities;
@@ -42,17 +40,5 @@ public abstract class ComponentSystem {
 
     private readonly IComponentSystem_Generated? _generated;
     private EntityManager? _entityManager;
-
-}
-
-
-public partial class ExampleSystem : ComponentSystem {
-
-    // [GenerateOptimized]
-    protected override void Execute() {
-        this.Entities
-            .Where(x => !x.Archetype.Contains<float>())
-            .ForEach((in int intValue) => { });
-    }
 
 }

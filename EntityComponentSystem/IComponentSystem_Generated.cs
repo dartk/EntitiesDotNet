@@ -2,5 +2,6 @@
 
 
 public interface IComponentSystem_Generated {
-    void Execute();
+    void OnInit();
+    void OnExecute();
 }

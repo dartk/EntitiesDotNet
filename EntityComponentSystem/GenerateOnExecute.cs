@@ -2,5 +2,5 @@
 
 
 [AttributeUsage(AttributeTargets.Method)]
-public class OptimizeExecuteMethodAttribute : Attribute {
+public class GenerateOnExecute : Attribute {
 }
