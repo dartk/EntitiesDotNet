@@ -133,12 +133,12 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    public object? GetValue(Type component, int index) {
+    public object? GetValue(ComponentType component, int index) {
         return this.GetArray(component).GetValue(index);
     }
 
 
-    public void SetValue(Type component, int index, object? value) {
+    public void SetValue(ComponentType component, int index, object? value) {
         this.GetArray(component).SetValue(value, index);
     }
 
@@ -221,7 +221,7 @@ public partial class ComponentArray : IComponentArray {
     private int _capacity;
 
 
-    internal bool TryGetArray(Type component, out Array components) {
+    internal bool TryGetArray(ComponentType component, out Array components) {
         var index = this.Archetype.GetIndex(component);
         if (index < 0) {
             components = null!;
@@ -233,10 +233,10 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    internal Array GetArray(Type component) {
+    internal Array GetArray(ComponentType component) {
         if (!this.TryGetArray(component, out var components)) {
             throw new ArgumentOutOfRangeException(
-                $"IComponentArray does not contain component '{component.FullName}'.");
+                $"IComponentArray does not contain component '{component}'.");
         }
 
         return components;
@@ -244,13 +244,13 @@ public partial class ComponentArray : IComponentArray {
 
 
     internal bool TryGetArray<T>(out T[] array) {
-        var result = this.TryGetArray(typeof(T), out var arrayRaw);
+        var result = this.TryGetArray(ComponentType<T>.Instance, out var arrayRaw);
         array = (T[])arrayRaw;
         return result;
     }
 
 
-    internal T[] GetArray<T>() => (T[])this.GetArray(typeof(T));
+    internal T[] GetArray<T>() => (T[])this.GetArray(ComponentType<T>.Instance);
 
 
     #endregion

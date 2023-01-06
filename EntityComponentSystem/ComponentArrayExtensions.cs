@@ -12,7 +12,7 @@ public static partial class ComponentArrayExtensions {
 
         writer.SetDefaultAlignment(HorizontalAlignment.Center);
         foreach (var component in components) {
-            writer.Cell(component.Name);
+            writer.Cell(component.Type.Name);
         }
 
         writer.NewRow();

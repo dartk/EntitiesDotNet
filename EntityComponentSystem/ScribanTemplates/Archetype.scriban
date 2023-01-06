@@ -10,7 +10,8 @@ public static class Archetype<{{ type_parameters_str count }}> {
     
     public static readonly Archetype Instance = Archetype.Instance(
         {{- for i in 0..last_index }}
-        typeof(T{{ i }}) {{~ if i < last_index; ","; end }}
+        ComponentType<T{{ i }}>.Instance
+        {{- if i < last_index; ","; end }}
         {{- end }}
     );
     
@@ -29,14 +30,16 @@ public partial class Archetype {
         
     public Archetype With<{{ type_parameters_str count }}>() => this.With(
             {{- for i in 0..last_index }}
-            typeof(T{{ i }}) {{~ if i < last_index; ","; end }}
+            ComponentType<T{{ i }}>.Instance
+            {{- if i < last_index; ","; end }}
             {{- end }}
         );
         
         
     public Archetype Without<{{ type_parameters_str count }}>() => this.Without(
             {{- for i in 0..last_index }}
-            typeof(T{{ i }}) {{~ if i < last_index; ","; end }}
+            ComponentType<T{{ i }}>.Instance
+            {{- if i < last_index; ","; end }}
             {{- end }}
         );
         
@@ -64,7 +67,7 @@ public partial class Archetype {
         
     public bool Contains<{{ type_parameters_str count }}>() =>
         {{- for i in 0..last_index }}
-        {{ if i > 0; "&& "; end }}this.Contains(typeof(T{{ i }}))
+        {{ if i > 0; "&& "; end }}this.Contains(ComponentType<T{{ i }}>.Instance)
         {{- end }};
     
 {{- end }}

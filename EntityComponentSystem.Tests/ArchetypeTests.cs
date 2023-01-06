@@ -38,17 +38,19 @@ public class ArchetypeTests {
         var xyz = Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
 
         Assert.Equal(
-            new[] { typeof(X) },
+            new ComponentType[] { typeof(EntityId), typeof(X) },
             x.Components.ToArray()
         );
 
         Assert.Equal(
-            new[] { typeof(X), typeof(Y) }.OrderBy(component => component.GUID),
+            new ComponentType[] { typeof(EntityId), typeof(X), typeof(Y) }
+                .OrderBy(x => x.Id),
             xy.Components.ToArray()
         );
 
         Assert.Equal(
-            new[] { typeof(X), typeof(Y), typeof(Z) }.OrderBy(component => component.GUID),
+            new ComponentType[] { typeof(EntityId), typeof(X), typeof(Y), typeof(Z) }
+                .OrderBy(x => x.Id),
             xyz.Components.ToArray()
         );
     }
