@@ -8,6 +8,17 @@
     </PropertyGroup>
 
     <PropertyGroup>
+        <Title>EntityComponentSystem.Generators</Title>
+        <Description>Generators for Entity Component System</Description>
+        <Authors>Dmitry Artemkin</Authors>
+        <Copyright>2023</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/dartk/EntityComponentSystem</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/dartk/EntityComponentSystem</PackageProjectUrl>
+        <PackageVersion>0.0.1</PackageVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
         <IncludeBuildOutput>false</IncludeBuildOutput>
     </PropertyGroup>
 

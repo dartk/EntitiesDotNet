@@ -7,6 +7,16 @@
         <LangVersion>10</LangVersion>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <Title>EntityComponentSystem</Title>
+        <Description>Entity Component System</Description>
+        <Authors>Dmitry Artemkin</Authors>
+        <Copyright>2023</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/dartk/EntityComponentSystem</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/dartk/EntityComponentSystem</PackageProjectUrl>
+        <PackageVersion>0.0.1</PackageVersion>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="System.Memory" Version="4.5.5" />
