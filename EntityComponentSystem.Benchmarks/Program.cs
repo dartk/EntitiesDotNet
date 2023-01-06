@@ -2,4 +2,4 @@
 using EntityComponentSystem.Benchmarks;
 
 
-BenchmarkRunner.Run(typeof(IterationBenchmark));
+BenchmarkRunner.Run(typeof(ComponentSystemBenchmark));
