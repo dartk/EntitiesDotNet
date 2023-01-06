@@ -52,7 +52,9 @@ public class ComponentSystemGenerator :
                 classDeclarationSyntax,
                 methodDeclarationSyntax));
 
-        return new Info($"{methodDeclarationSyntax.Identifier}.g.cs", source);
+        return new Info(
+            $"{classDeclarationSyntax.Identifier}.{methodDeclarationSyntax.Identifier}_{this._sourceFileCounter++}.g.cs",
+            source);
     }
 
 
@@ -431,4 +433,7 @@ foreach (var __array in this.{{cacheName}}) {
         }
 
     }
+
+
+    private int _sourceFileCounter;
 }
