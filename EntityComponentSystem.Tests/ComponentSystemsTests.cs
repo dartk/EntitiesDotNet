@@ -5,8 +5,10 @@ using Xunit.Abstractions;
 namespace EntityComponentSystem.Tests;
 
 
-public class ComponentSystemsTests {
-    public ComponentSystemsTests(ITestOutputHelper output) {
+public class ComponentSystemsTests
+{
+    public ComponentSystemsTests(ITestOutputHelper output)
+    {
         this.Output = output;
     }
 
@@ -15,10 +17,12 @@ public class ComponentSystemsTests {
 
 
     [Fact]
-    public void Foo() {
+    public void Foo()
+    {
         var entityManager = new EntityManager();
 
-        for (var i = 0; i < 5; ++i) {
+        for (var i = 0; i < 5; ++i)
+        {
             entityManager.CreateEntity(
                 new Velocity { Float = i },
                 new Translation { }
@@ -43,9 +47,11 @@ public class ComponentSystemsTests {
 }
 
 
-public partial class TestSystem : ComponentSystem {
+public partial class TestSystem : ComponentSystem
+{
 
-    public TestSystem(ITestOutputHelper output, EntityManager em) {
+    public TestSystem(ITestOutputHelper output, EntityManager em)
+    {
         this.Output = output;
         this.Init(em);
     }
@@ -55,17 +61,19 @@ public partial class TestSystem : ComponentSystem {
 
 
     [GenerateOnExecute]
-    protected override void OnExecute() {
+    protected override void OnExecute()
+    {
         var deltaTime = 1f / 60f;
         this.Entities.ForEach(
-            (in Velocity velocity, ref Translation translation) => {
+            (in Velocity velocity, ref Translation translation) =>
+            {
                 translation = deltaTime * velocity;
             });
 
         this.Entities
             .Where(x => x.Archetype.Contains(SharedComponent.Instance(false)))
             .ForEach((ref int i) => i = -1);
-            
+
         this.Entities
             .Where(x => x.Archetype.Contains(SharedComponent.Instance(true)))
             .ForEach((ref int i) => i = 1);

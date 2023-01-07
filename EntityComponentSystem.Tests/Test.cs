@@ -8,7 +8,8 @@ namespace EntityComponentSystem.Tests;
 
 
 [GenerateImplicitOperators]
-public partial record struct Width {
+public partial record struct Width
+{
     public float Float;
 
 
@@ -18,7 +19,8 @@ public partial record struct Width {
 
 
 [GenerateImplicitOperators]
-public partial record struct Height {
+public partial record struct Height
+{
     public float Float;
 
 
@@ -28,14 +30,17 @@ public partial record struct Height {
 
 
 [Query]
-public ref partial struct Query {
+public ref partial struct Query
+{
     public ref Height Height;
     public ref Width Width;
 }
 
 
-public class ComponentArrayTests {
-    public ComponentArrayTests(ITestOutputHelper output) {
+public class ComponentArrayTests
+{
+    public ComponentArrayTests(ITestOutputHelper output)
+    {
         this.Output = output;
     }
 
@@ -44,9 +49,11 @@ public class ComponentArrayTests {
 
 
     [Fact]
-    public void ArrayAddTest() {
+    public void ArrayAddTest()
+    {
         var array = ComponentArray.Create<Width, Height>();
-        for (var i = 0; i < 3; ++i) {
+        for (var i = 0; i < 3; ++i)
+        {
             array.Add(new Width { Float = i * 2 }, new Height { Float = i * 3 });
         }
 
@@ -59,7 +66,8 @@ public class ComponentArrayTests {
 
 
     [Fact]
-    public void FillArrayUsingReadWrite() {
+    public void FillArrayUsingReadWrite()
+    {
         var array = ComponentArray.Create<Width, Height>();
         array.Add(5);
 
@@ -67,7 +75,8 @@ public class ComponentArrayTests {
 
         Assert.Equal(5, count);
 
-        for (var i = 0; i < count; ++i) {
+        for (var i = 0; i < count; ++i)
+        {
             width[i] = i * 2;
             height[i] = i * 3;
         }
@@ -83,13 +92,15 @@ public class ComponentArrayTests {
 
 
     [Fact]
-    public void FillArrayUsingQueryForEach() {
+    public void FillArrayUsingQueryForEach()
+    {
         var array = new ComponentArray(Archetype<Width, Height>.Instance);
         array.Add(5);
         Assert.Equal(5, array.Count);
 
         var i = 0;
-        foreach (var item in Query.Select(array)) {
+        foreach (var item in Query.Select(array))
+        {
             item.Width = i * 2;
             item.Height = i * 3;
             ++i;
@@ -106,13 +117,15 @@ public class ComponentArrayTests {
 
 
     [Fact]
-    public void FillArrayUsingQueryIndex() {
+    public void FillArrayUsingQueryIndex()
+    {
         var array = new ComponentArray(Archetype<Width, Height>.Instance);
         array.Add(5);
         Assert.Equal(5, array.Count);
 
         var query = Query.Select(array);
-        for (var i = 0; i < query.Length; ++i) {
+        for (var i = 0; i < query.Length; ++i)
+        {
             var item = query[i];
             item.Width = i * 2;
             item.Height = i * 3;
@@ -129,12 +142,14 @@ public class ComponentArrayTests {
 
 
     [Fact]
-    public void FillArrayUsingForEach() {
+    public void FillArrayUsingForEach()
+    {
         var array = new ComponentArray(Archetype<Width, Height>.Instance);
         array.Add(5);
         Assert.Equal(5, array.Count);
 
-        array.ForEach((int i, ref Width width, ref Height height) => {
+        array.ForEach((int i, ref Width width, ref Height height) =>
+        {
             width = i * 2;
             height = i * 3;
         });

@@ -9,7 +9,8 @@ namespace EntityComponentSystem.Generators;
 
 [Generator]
 public class
-    ImplicitCastGenerator : IncrementalGeneratorBase<ImplicitCastGenerator.Info> {
+    ImplicitCastGenerator : IncrementalGeneratorBase<ImplicitCastGenerator.Info>
+{
     private const string TemplateFileName = "ImplicitCast.scriban";
 
 
@@ -26,8 +27,10 @@ public class
     );
 
 
-    protected override bool Choose(SyntaxNode node, CancellationToken token) {
-        if (node is not AttributeSyntax attribute) {
+    protected override bool Choose(SyntaxNode node, CancellationToken token)
+    {
+        if (node is not AttributeSyntax attribute)
+        {
             return false;
         }
 
@@ -39,7 +42,8 @@ public class
     protected override Info? Select(
         GeneratorSyntaxContext context,
         CancellationToken token
-    ) {
+    )
+    {
         var semanticModel = context.SemanticModel;
         var attribute = (AttributeSyntax)context.Node;
         var structSyntax = attribute.Parent?.Parent;
@@ -48,7 +52,8 @@ public class
             structSyntax == null
             || semanticModel.GetDeclaredSymbol(structSyntax)
                 is not INamedTypeSymbol structSymbol
-        ) {
+        )
+        {
             return null;
         }
 
@@ -58,18 +63,19 @@ public class
             .Cast<IFieldSymbol>()
             .ToList();
 
-        if (fieldSymbols.Count != 1) {
+        if (fieldSymbols.Count != 1)
+        {
             return null;
         }
 
         var fieldSymbol = fieldSymbols.First();
 
-        var structDeclarationSyntax = 
+        var structDeclarationSyntax =
             (Microsoft.CodeAnalysis.CSharp.Syntax.TypeDeclarationSyntax)structSymbol.DeclaringSyntaxReferences.First()
                 .GetSyntax();
         var typeDeclaration =
             structDeclarationSyntax.Modifiers.ToFullString()
-            + (structDeclarationSyntax is RecordDeclarationSyntax ? "record struct " : "struct " )
+            + (structDeclarationSyntax is RecordDeclarationSyntax ? "record struct " : "struct ")
             + structDeclarationSyntax.Identifier;
 
         return new Info(
@@ -85,7 +91,8 @@ public class
     protected override void Produce(
         SourceProductionContext context,
         ImmutableArray<Info> items
-    ) {
+    )
+    {
         var templateContent = GetTemplate(TemplateFileName);
         var template = Template.Parse(templateContent, TemplateFileName);
 

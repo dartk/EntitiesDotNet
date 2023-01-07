@@ -6,9 +6,11 @@ using Microsoft.CodeAnalysis;
 namespace EntityComponentSystem.Generators;
 
 
-public abstract class IncrementalGeneratorBase<T> : IIncrementalGenerator {
+public abstract class IncrementalGeneratorBase<T> : IIncrementalGenerator
+{
 
-    public void Initialize(IncrementalGeneratorInitializationContext context) {
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
         var provider = context
             .SyntaxProvider
             .CreateSyntaxProvider(this.Choose, this.Select)
@@ -27,10 +29,12 @@ public abstract class IncrementalGeneratorBase<T> : IIncrementalGenerator {
         SourceProductionContext context, ImmutableArray<T> items);
 
 
-    protected static string GetTemplate(string fileName) {
+    protected static string GetTemplate(string fileName)
+    {
         using var stream = Assembly.GetExecutingAssembly()
             .GetManifestResourceStream($"EntityComponentSystem.Generators.Templates.{fileName}");
-        if (stream == null) {
+        if (stream == null)
+        {
             throw new ArgumentException($"Template '{fileName}' is not found.");
         }
 

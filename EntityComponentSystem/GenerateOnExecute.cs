@@ -2,5 +2,6 @@
 
 
 [AttributeUsage(AttributeTargets.Method)]
-public class GenerateOnExecute : Attribute {
+public class GenerateOnExecute : Attribute
+{
 }

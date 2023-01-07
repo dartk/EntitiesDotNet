@@ -1,7 +1,8 @@
 ﻿namespace EntityComponentSystem;
 
 
-public partial class ComponentArray : IComponentArray {
+public partial class ComponentArray : IComponentArray
+{
 
 
     #region Public
@@ -10,37 +11,44 @@ public partial class ComponentArray : IComponentArray {
     public ComponentArray(int capacity = DefaultCapacity) : this(Archetype.Empty, capacity) { }
 
 
-    public ComponentArray(Archetype archetype, int capacity = DefaultCapacity) {
+    public ComponentArray(Archetype archetype, int capacity = DefaultCapacity)
+    {
         this._capacity = capacity;
         this._archetype = archetype;
 
         var components = archetype.Components;
         this._arrays = new Array[components.Length];
-        for (var i = 0; i < components.Length; ++i) {
+        for (var i = 0; i < components.Length; ++i)
+        {
             this._arrays[i] = Array.CreateInstance(components[i], capacity);
         }
     }
 
 
     public int Count { get; private set; }
-    
-    
-    public int Capacity {
+
+
+    public int Capacity
+    {
         get => this._capacity;
-        set {
+        set
+        {
             var newCapacity = value;
-            if (newCapacity == this.Capacity) {
+            if (newCapacity == this.Capacity)
+            {
                 return;
             }
 
-            if (newCapacity < this.Count) {
+            if (newCapacity < this.Count)
+            {
                 throw new ArgumentOutOfRangeException(
                     $"Cannot set capacity to {value}. {nameof(ComponentArray)} already contains {this.Count} elements."
                 );
             }
 
             var components = this.Archetype.Components;
-            for (var i = 0; i < components.Length; ++i) {
+            for (var i = 0; i < components.Length; ++i)
+            {
                 ref var array = ref this._arrays[i];
                 var newArray = Array.CreateInstance(components[i], newCapacity);
                 array.CopyTo(newArray, 0);
@@ -52,18 +60,23 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    public Archetype Archetype {
+    public Archetype Archetype
+    {
         get => this._archetype;
-        set {
+        set
+        {
             var newArchetype = value;
-            if (this.Archetype == newArchetype) {
+            if (this.Archetype == newArchetype)
+            {
                 return;
             }
 
             var newArrays = new Array[newArchetype.Components.Length];
-            for (var i = 0; i < newArrays.Length; ++i) {
+            for (var i = 0; i < newArrays.Length; ++i)
+            {
                 var component = newArchetype.Components[i];
-                if (!this.TryGetArray(component, out var array)) {
+                if (!this.TryGetArray(component, out var array))
+                {
                     array = Array.CreateInstance(component, this.Count);
                 }
 
@@ -80,20 +93,24 @@ public partial class ComponentArray : IComponentArray {
     /// Adds the specified number of elements.
     /// </summary>
     /// <param name="count">Number of elements to add.</param>
-    public void Add(int count = 1) {
+    public void Add(int count = 1)
+    {
         var newCount = this.Count + count;
         this.EnsureCapacity(newCount);
         this.Count += count;
     }
 
 
-    public void Remove(int count = 1) {
-        if (this.Count <= count) {
+    public void Remove(int count = 1)
+    {
+        if (this.Count <= count)
+        {
             throw new ArgumentOutOfRangeException();
         }
 
         var newCount = this.Count - count;
-        foreach (var array in this._arrays) {
+        foreach (var array in this._arrays)
+        {
             Array.Clear(array, newCount, count);
         }
 
@@ -101,18 +118,22 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    public ReadOnlySpan<T> GetReadOnlySpan<T>() {
+    public ReadOnlySpan<T> GetReadOnlySpan<T>()
+    {
         return this.GetArray<T>().AsSpan(0, this.Count);
     }
 
 
-    public Span<T> GetSpan<T>() {
+    public Span<T> GetSpan<T>()
+    {
         return this.GetArray<T>().AsSpan(0, this.Count);
     }
 
 
-    public bool TryGetReadOnlySpan<T>(out ReadOnlySpan<T> span) {
-        if (this.TryGetArray<T>(out var array)) {
+    public bool TryGetReadOnlySpan<T>(out ReadOnlySpan<T> span)
+    {
+        if (this.TryGetArray<T>(out var array))
+        {
             span = array;
             return true;
         }
@@ -122,8 +143,10 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    public bool TryGetSpan<T>(out Span<T> span) {
-        if (this.TryGetArray<T>(out var array)) {
+    public bool TryGetSpan<T>(out Span<T> span)
+    {
+        if (this.TryGetArray<T>(out var array))
+        {
             span = array;
             return true;
         }
@@ -133,12 +156,14 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    public object? GetValue(ComponentType component, int index) {
+    public object? GetValue(ComponentType component, int index)
+    {
         return this.GetArray(component).GetValue(index);
     }
 
 
-    public void SetValue(ComponentType component, int index, object? value) {
+    public void SetValue(ComponentType component, int index, object? value)
+    {
         this.GetArray(component).SetValue(value, index);
     }
 
@@ -153,10 +178,13 @@ public partial class ComponentArray : IComponentArray {
     /// <param name="destIndex">Start index of the range in dest <see cref="ComponentArray"/>.</param>
     /// <param name="count">Number of elements to copy.</param>
     public static void CopyTo(ComponentArray src, int srcIndex, ComponentArray dest,
-        int destIndex, int count) {
-        foreach (var field in src.Archetype.Components) {
+        int destIndex, int count)
+    {
+        foreach (var field in src.Archetype.Components)
+        {
             var srcArray = src.GetArray(field);
-            if (dest.TryGetArray(field, out var destArray)) {
+            if (dest.TryGetArray(field, out var destArray))
+            {
                 Array.Copy(srcArray, srcIndex, destArray, destIndex, count);
             }
         }
@@ -169,7 +197,8 @@ public partial class ComponentArray : IComponentArray {
     /// </summary>
     /// <param name="dest">The <see cref="ComponentArray"/> to copy values to.</param>
     /// <param name="destIndex">Index in the destination <see cref="ComponentArray"/> at which copying begins.</param>
-    public void CopyTo(ComponentArray dest, int destIndex) {
+    public void CopyTo(ComponentArray dest, int destIndex)
+    {
         CopyTo(this, 0, dest, destIndex, this.Count);
     }
 
@@ -186,16 +215,20 @@ public partial class ComponentArray : IComponentArray {
     /// </summary>
     /// <param name="index">The starting index of the range to clear.</param>
     /// <param name="length">The number of elements to clear.</param>
-    public void Clear(int index, int length) {
-        foreach (var field in this.Archetype.Components) {
+    public void Clear(int index, int length)
+    {
+        foreach (var field in this.Archetype.Components)
+        {
             var array = this.GetArray(field);
             Array.Clear(array, index, length);
         }
     }
 
 
-    public void EnsureCapacity(int min) {
-        if (this.Capacity >= min) {
+    public void EnsureCapacity(int min)
+    {
+        if (this.Capacity >= min)
+        {
             return;
         }
 
@@ -210,8 +243,8 @@ public partial class ComponentArray : IComponentArray {
 
 
     #region Private
-    
-    
+
+
     private const int DefaultCapacity = 4;
     private const int MaxArrayLength = 2 * 1024 * 1024;
 
@@ -221,9 +254,11 @@ public partial class ComponentArray : IComponentArray {
     private int _capacity;
 
 
-    internal bool TryGetArray(ComponentType component, out Array components) {
+    internal bool TryGetArray(ComponentType component, out Array components)
+    {
         var index = this.Archetype.GetIndex(component);
-        if (index < 0) {
+        if (index < 0)
+        {
             components = null!;
             return false;
         }
@@ -233,8 +268,10 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    internal Array GetArray(ComponentType component) {
-        if (!this.TryGetArray(component, out var components)) {
+    internal Array GetArray(ComponentType component)
+    {
+        if (!this.TryGetArray(component, out var components))
+        {
             throw new ArgumentOutOfRangeException(
                 $"IComponentArray does not contain component '{component}'.");
         }
@@ -243,7 +280,8 @@ public partial class ComponentArray : IComponentArray {
     }
 
 
-    internal bool TryGetArray<T>(out T[] array) {
+    internal bool TryGetArray<T>(out T[] array)
+    {
         var result = this.TryGetArray(ComponentType<T>.Instance, out var arrayRaw);
         array = (T[])arrayRaw;
         return result;

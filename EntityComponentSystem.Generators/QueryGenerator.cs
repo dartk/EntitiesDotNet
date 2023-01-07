@@ -8,11 +8,12 @@ namespace EntityComponentSystem.Generators;
 
 
 [Generator]
-public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info> {
+public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info>
+{
 
     private const string TemplateFileName = "Query.scriban";
 
-    
+
     private const string Query = nameof(Query);
     private const string QueryAttribute = nameof(QueryAttribute);
 
@@ -31,8 +32,10 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info> {
     );
 
 
-    protected override bool Choose(SyntaxNode node, CancellationToken token) {
-        if (node is not AttributeSyntax attribute) {
+    protected override bool Choose(SyntaxNode node, CancellationToken token)
+    {
+        if (node is not AttributeSyntax attribute)
+        {
             return false;
         }
 
@@ -44,7 +47,8 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info> {
     protected override Info? Select(
         GeneratorSyntaxContext context,
         CancellationToken token
-    ) {
+    )
+    {
         var semanticModel = context.SemanticModel;
         var attribute = (AttributeSyntax)context.Node;
 
@@ -53,7 +57,8 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info> {
             classDeclaration is not StructDeclarationSyntax structDeclarationSyntax
             || semanticModel.GetDeclaredSymbol(structDeclarationSyntax)
                 is not ITypeSymbol type
-        ) {
+        )
+        {
             return null;
         }
 
@@ -61,31 +66,38 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info> {
         var readMembers = new List<ComponentInfo>();
         var writeMembers = new List<ComponentInfo>();
 
-        foreach (var member in type.GetMembers()) {
-            if (member is not IFieldSymbol fieldSymbol) {
+        foreach (var member in type.GetMembers())
+        {
+            if (member is not IFieldSymbol fieldSymbol)
+            {
                 continue;
             }
 
-            if (fieldSymbol.DeclaredAccessibility != Accessibility.Public) {
+            if (fieldSymbol.DeclaredAccessibility != Accessibility.Public)
+            {
                 continue;
             }
 
-            foreach (var @ref in fieldSymbol.DeclaringSyntaxReferences) {
+            foreach (var @ref in fieldSymbol.DeclaringSyntaxReferences)
+            {
                 var node = @ref.GetSyntax();
                 var parent = node.Parent;
-                if (parent == null) {
+                if (parent == null)
+                {
                     continue;
                 }
 
                 var parentStr = parent.ToString();
-                if (parentStr.Contains("ref readonly")) {
+                if (parentStr.Contains("ref readonly"))
+                {
                     readMembers.Add(
                         new ComponentInfo(
                             member.Name,
                             fieldSymbol.Type.ToDisplayString()
                         ));
                 }
-                else if (parentStr.Contains("ref ")) {
+                else if (parentStr.Contains("ref "))
+                {
                     writeMembers.Add(
                         new ComponentInfo(
                             member.Name,
@@ -95,14 +107,16 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info> {
             }
         }
 
-        if (readMembers.Any() || writeMembers.Any()) {
+        if (readMembers.Any() || writeMembers.Any())
+        {
             return new Info(
                 structDeclarationSyntax,
                 type,
                 readMembers.ToImmutableArray(),
                 writeMembers.ToImmutableArray());
         }
-        else {
+        else
+        {
             return null;
         }
     }
@@ -111,12 +125,15 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info> {
     protected override void Produce(
         SourceProductionContext context,
         ImmutableArray<Info> items
-    ) {
+    )
+    {
         var templateContent = GetTemplate(TemplateFileName);
         var template = Template.Parse(templateContent, TemplateFileName);
 
-        var sourceCode = template.Render(new {
-            Types = items.Select(item => new {
+        var sourceCode = template.Render(new
+        {
+            Types = items.Select(item => new
+            {
                 Namespace = item.TypeSymbol.ContainingNamespace.ToDisplayString(),
                 Name = item.TypeSymbol.Name,
                 Modifiers = item.StructDeclarationSyntax.Modifiers.ToFullString(),

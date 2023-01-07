@@ -4,9 +4,11 @@
 namespace EntityComponentSystem;
 
 
-public partial class EntityManager {
+public partial class EntityManager
+{
 
-    public EntityManager() {
+    public EntityManager()
+    {
         this._arrays = new ResizableArray<IComponentArray>();
         this.Entities = this._arrays;
     }
@@ -16,14 +18,17 @@ public partial class EntityManager {
     public int Version { get; private set; }
 
 
-    public Entity CreateEntity(Archetype archetype) {
+    public Entity CreateEntity(Archetype archetype)
+    {
         var array = (ComponentArray)this.GetArray(archetype);
 
         int entityId;
-        if (this._deadEntityIndices.Count > 0) {
+        if (this._deadEntityIndices.Count > 0)
+        {
             entityId = this._deadEntityIndices.Dequeue();
         }
-        else {
+        else
+        {
             entityId = this._entityInfoArray.Count;
             this._entityInfoArray.Add(default);
         }
@@ -35,7 +40,8 @@ public partial class EntityManager {
         entityInfo.Index = index;
         entityInfo.Version++;
 
-        if (array.Count == 0) {
+        if (array.Count == 0)
+        {
             this.IncreaseVersion();
         }
 
@@ -44,29 +50,35 @@ public partial class EntityManager {
     }
 
 
-    public void DestroyEntity(EntityId entity) {
-        if (entity.Id >= this._entityInfoArray.Count) {
+    public void DestroyEntity(EntityId entity)
+    {
+        if (entity.Id >= this._entityInfoArray.Count)
+        {
             throw new InvalidOperationException($"Entity [{entity}] does not exist.");
         }
 
         ref var entityInfo = ref this._entityInfoArray[entity.Id];
-        if (entityInfo.Array == null) {
+        if (entityInfo.Array == null)
+        {
             throw new InvalidOperationException($"Entity [{entity}] was destroyed.");
         }
 
         var array = entityInfo.Array;
         var index = entityInfo.Index;
 
-        if (index == array.Count - 1) {
+        if (index == array.Count - 1)
+        {
             array.Remove();
         }
-        else {
+        else
+        {
             ComponentArray.CopyTo(array, array.Count - 1, array, index, 1);
             var movedEntityId = array.GetReadOnlySpan<EntityId>()[index].Id;
             this._entityInfoArray[movedEntityId].Index = index;
         }
 
-        if (array.Count == 0) {
+        if (array.Count == 0)
+        {
             this.IncreaseVersion();
         }
 
@@ -75,7 +87,8 @@ public partial class EntityManager {
     }
 
 
-    public EntityLocation GetEntityLocation(EntityId entityId) {
+    public EntityLocation GetEntityLocation(EntityId entityId)
+    {
         this.GetEntityLocation(entityId, out var array, out var index);
         return new EntityLocation(array, index);
     }
@@ -83,14 +96,17 @@ public partial class EntityManager {
 
     public void GetEntityLocation(
         EntityId entityId, out IComponentArray array, out int index
-    ) {
+    )
+    {
         ref var info = ref this._entityInfoArray[entityId.Id];
-        if (info.Version != entityId.Version) {
+        if (info.Version != entityId.Version)
+        {
             throw new ArgumentException(
                 $"Wrong entity [{entityId.Id}] version. Expected: {info.Version}. Actual: {entityId.Version}");
         }
 
-        if (info.Array == null) {
+        if (info.Array == null)
+        {
             throw new ArgumentException($"Entity [{entityId}] was destroyed.");
         }
 
@@ -99,8 +115,10 @@ public partial class EntityManager {
     }
 
 
-    public IComponentArray GetArray(Archetype archetype) {
-        if (this._arrayByArchetype.TryGetValue(archetype, out var array)) {
+    public IComponentArray GetArray(Archetype archetype)
+    {
+        if (this._arrayByArchetype.TryGetValue(archetype, out var array))
+        {
             return array;
         }
 
@@ -113,10 +131,13 @@ public partial class EntityManager {
     }
 
 
-    public string ToReadableString() {
+    public string ToReadableString()
+    {
         var builder = new StringBuilder();
-        foreach (var array in this._arrays) {
-            if (builder.Length > 0) {
+        foreach (var array in this._arrays)
+        {
+            if (builder.Length > 0)
+            {
                 builder.AppendLine();
             }
 
@@ -129,7 +150,8 @@ public partial class EntityManager {
 
 
     public TSystem CreateSystem<TSystem>()
-        where TSystem : ComponentSystem, new() {
+        where TSystem : ComponentSystem, new()
+    {
         var system = new TSystem();
         system.Init(this);
         return system;
@@ -143,19 +165,21 @@ public partial class EntityManager {
 
 
     private readonly Dictionary<Archetype, IComponentArray>
-        _arrayByArchetype = new ();
+        _arrayByArchetype = new();
 
 
-    private readonly ResizableArray<EntityInfo> _entityInfoArray = new ();
-    private readonly Queue<int> _deadEntityIndices = new ();
+    private readonly ResizableArray<EntityInfo> _entityInfoArray = new();
+    private readonly Queue<int> _deadEntityIndices = new();
 
 
-    private void IncreaseVersion() {
+    private void IncreaseVersion()
+    {
         ++this.Version;
     }
 
 
-    private struct EntityInfo {
+    private struct EntityInfo
+    {
         public int Version;
         public ComponentArray? Array;
         public int Index;

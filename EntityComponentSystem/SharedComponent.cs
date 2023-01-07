@@ -5,34 +5,41 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace EntityComponentSystem;
 
 
-public interface ISharedComponent {
+public interface ISharedComponent
+{
     int Id { get; }
     Type Type { get; }
 }
 
 
 [SuppressMessage("ReSharper", "StaticMemberInGenericType")]
-public class SharedComponent<T> : ISharedComponent {
+public class SharedComponent<T> : ISharedComponent
+{
 
     public int Id { get; }
     public T Value { get; }
     public Type Type => typeof(T);
 
 
-    public override string ToString() {
+    public override string ToString()
+    {
         return $"{this.Type.Name} = {this.Value}";
     }
 
 
-    private SharedComponent(T value) {
+    private SharedComponent(T value)
+    {
         this.Id = SharedComponent.GetNextId();
         this.Value = value;
     }
 
 
-    public static SharedComponent<T> Instance(T value) {
-        lock (Locker) {
-            if (ComponentByValue.TryGetValue(value, out var component)) {
+    public static SharedComponent<T> Instance(T value)
+    {
+        lock (Locker)
+        {
+            if (ComponentByValue.TryGetValue(value, out var component))
+            {
                 return component;
             }
 
@@ -44,18 +51,20 @@ public class SharedComponent<T> : ISharedComponent {
     }
 
 
-    private static readonly object Locker = new ();
-    private static readonly Dictionary<T, SharedComponent<T>> ComponentByValue = new ();
+    private static readonly object Locker = new();
+    private static readonly Dictionary<T, SharedComponent<T>> ComponentByValue = new();
 }
 
 
-public static class SharedComponent {
-    
+public static class SharedComponent
+{
+
     public static SharedComponent<T> Instance<T>(T value) =>
         SharedComponent<T>.Instance(value);
 
 
-    internal static int GetNextId() {
+    internal static int GetNextId()
+    {
         return Interlocked.Increment(ref NextId);
     }
 

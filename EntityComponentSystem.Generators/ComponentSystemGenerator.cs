@@ -13,7 +13,8 @@ namespace EntityComponentSystem.Generators;
 
 [Generator]
 public class ComponentSystemGenerator :
-    IncrementalGeneratorBase<ComponentSystemGenerator.Info> {
+    IncrementalGeneratorBase<ComponentSystemGenerator.Info>
+{
 
     private const string GenerateOnExecute = nameof(GenerateOnExecute);
 
@@ -25,8 +26,10 @@ public class ComponentSystemGenerator :
     public record Info(string FileName, string Source);
 
 
-    protected override bool Choose(SyntaxNode node, CancellationToken token) {
-        if (node is not AttributeSyntax attributeSyntax) {
+    protected override bool Choose(SyntaxNode node, CancellationToken token)
+    {
+        if (node is not AttributeSyntax attributeSyntax)
+        {
             return false;
         }
 
@@ -38,11 +41,13 @@ public class ComponentSystemGenerator :
     protected override Info? Select(
         GeneratorSyntaxContext context,
         CancellationToken token
-    ) {
+    )
+    {
         var attribute = (AttributeSyntax)context.Node;
 
         var methodDeclarationSyntax = (MethodDeclarationSyntax?)attribute.Parent?.Parent;
-        if (methodDeclarationSyntax == null) {
+        if (methodDeclarationSyntax == null)
+        {
             throw new UnreachableException(
                 $"{nameof(MethodDeclarationSyntax)} is not found.");
         }
@@ -64,21 +69,26 @@ public class ComponentSystemGenerator :
     protected override void Produce(
         SourceProductionContext context,
         ImmutableArray<Info> items
-    ) {
-        foreach (var item in items) {
+    )
+    {
+        foreach (var item in items)
+        {
             context.AddSource(item.FileName, item.Source);
         }
     }
 
 
-    private static string GenerateSourceFile(SyntaxNode node, Func<string> getContent) {
+    private static string GenerateSourceFile(SyntaxNode node, Func<string> getContent)
+    {
         var source = new StringBuilder();
 
         source.AppendLine(getContent());
 
         var ancestors = node.Ancestors();
-        foreach (var ancestor in ancestors) {
-            if (TypeDeclarationSyntaxUtil.ToString(ancestor) is { } str) {
+        foreach (var ancestor in ancestors)
+        {
+            if (TypeDeclarationSyntaxUtil.ToString(ancestor) is { } str)
+            {
                 source.Insert(0,
                     Environment.NewLine
                     + str + " {"
@@ -90,12 +100,14 @@ public class ComponentSystemGenerator :
             var usingList = ancestor.ChildNodes()
                 .Where(x => x is UsingDirectiveSyntax or UsingStatementSyntax);
 
-            foreach (var item in usingList) {
+            foreach (var item in usingList)
+            {
                 source.Insert(0, item + Environment.NewLine);
             }
 
             {
-                if (ancestor is NamespaceDeclarationSyntax @namespace) {
+                if (ancestor is NamespaceDeclarationSyntax @namespace)
+                {
                     source.Insert(0,
                         Environment.NewLine
                         + $"namespace {@namespace.Name} {{"
@@ -106,7 +118,8 @@ public class ComponentSystemGenerator :
             }
 
             {
-                if (ancestor is FileScopedNamespaceDeclarationSyntax @namespace) {
+                if (ancestor is FileScopedNamespaceDeclarationSyntax @namespace)
+                {
                     source.Insert(0,
                         Environment.NewLine
                         + $"namespace {@namespace.Name};"
@@ -120,7 +133,8 @@ public class ComponentSystemGenerator :
 
 
     private static IdentifierNameSyntax GetInvokedMethodName(
-        InvocationExpressionSyntax node) {
+        InvocationExpressionSyntax node)
+    {
         var memberAccess = node.ChildNodes().OfType<MemberAccessExpressionSyntax>()
             .First();
 
@@ -133,7 +147,8 @@ public class ComponentSystemGenerator :
     private static string GenerateComponentSystemClass(
         ClassDeclarationSyntax classDeclarationSyntax,
         MethodDeclarationSyntax methodSyntax
-    ) {
+    )
+    {
         var source = new StringBuilder();
 
         source.AppendLine(
@@ -145,7 +160,8 @@ public class ComponentSystemGenerator :
 
         var forEachInvocations = ChooseForEachInvocations(methodBlock).ToList();
         source.AppendLine();
-        for (var i = 0; i < forEachInvocations.Count; ++i) {
+        for (var i = 0; i < forEachInvocations.Count; ++i)
+        {
             source.AppendLine($"private {nameof(EntityQueryCache)} __cache{i};");
         }
 
@@ -154,7 +170,8 @@ public class ComponentSystemGenerator :
 
         source.AppendLine();
         source.AppendLine("void IComponentSystem_Generated.OnInit() {");
-        for (var i = 0; i < forEachInvocations.Count; ++i) {
+        for (var i = 0; i < forEachInvocations.Count; ++i)
+        {
             var invocation = forEachInvocations[i];
             var filterList = WhereLambdaInfo.FromExpression(invocation.Expression);
             var foreachInfo = ForEachInfo.FromSyntax(invocation);
@@ -173,7 +190,8 @@ public class ComponentSystemGenerator :
 
         var blockText = methodBlock.GetText();
         var lastPosition = 0;
-        for (var i = 0; i < forEachInvocations.Count; ++i) {
+        for (var i = 0; i < forEachInvocations.Count; ++i)
+        {
             var invocation = forEachInvocations[i];
 
             var statement = invocation.Ancestors()
@@ -202,7 +220,8 @@ public class ComponentSystemGenerator :
 
     private static string GenerateCacheInitialization(
         ForEachInfo info, List<WhereLambdaInfo> filters, string cacheName
-    ) {
+    )
+    {
         // "T0, T1, ..."
         var componentTypesStr =
             string.Join(", ", info.Components.Select(x => x.Type));
@@ -211,7 +230,8 @@ public class ComponentSystemGenerator :
             $"array => array.Archetype.Contains<{componentTypesStr}>()"
         };
 
-        foreach (var filter in filters) {
+        foreach (var filter in filters)
+        {
             predicateList.Add(filter.Lambda);
         }
 
@@ -226,19 +246,23 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
 
     private static IEnumerable<InvocationExpressionSyntax> ChooseForEachInvocations(
         SyntaxNode node
-    ) {
+    )
+    {
         var lambdas = node.DescendantNodesAndSelf()
             .OfType<ParenthesizedLambdaExpressionSyntax>();
 
-        foreach (var lambda in lambdas) {
+        foreach (var lambda in lambdas)
+        {
             if (lambda?.Parent?.Parent?.Parent is not InvocationExpressionSyntax
                 invocation
-            ) {
+            )
+            {
                 continue;
             }
 
             var method = GetInvokedMethodName(invocation);
-            if (method.ToString() == "ForEach") {
+            if (method.ToString() == "ForEach")
+            {
                 yield return invocation;
             }
         }
@@ -247,7 +271,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
 
     private static string GenerateOptimizedForEach(
         ForEachInfo foreachInfo, List<WhereLambdaInfo> whereLambdas, string cacheName
-    ) {
+    )
+    {
         // "T0, T1, ..."
         var componentTypesStr =
             string.Join(", ", foreachInfo.Components.Select(x => x.Type));
@@ -256,7 +281,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
             $"array => array.Archetype.Contains<{componentTypesStr}>()"
         };
 
-        foreach (var whereLambda in whereLambdas) {
+        foreach (var whereLambda in whereLambdas)
+        {
             predicateList.Add(whereLambda.Lambda);
         }
 
@@ -286,7 +312,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
         IReadOnlyList<ForEachArgInfo> Components,
         string Body,
         int LineStart
-    ) {
+    )
+    {
 
         public IEnumerable<ForEachArgInfo> ReadComponents =>
             this.Components.Where(x => x.IsReadOnly);
@@ -298,7 +325,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
 
         public static ForEachInfo FromSyntax(
             InvocationExpressionSyntax foreachInvocation
-        ) {
+        )
+        {
             var lambda = foreachInvocation
                 .DescendantNodes()
                 .OfType<ParenthesizedLambdaExpressionSyntax>()
@@ -307,18 +335,21 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
             string lambdaBodyStr;
             int lineStart;
             var tree = lambda.SyntaxTree;
-            if (lambda.ExpressionBody != null) {
+            if (lambda.ExpressionBody != null)
+            {
                 lambdaBodyStr = lambda.ExpressionBody + ";";
                 var lineSpan = tree.GetMappedLineSpan(lambda.ExpressionBody.Span);
                 lineStart = lineSpan.StartLinePosition.Line;
             }
-            else {
+            else
+            {
                 if (
                     lambda.Block!
                     .DescendantNodes()
                     .OfType<ReturnStatementSyntax>()
                     .Any()
-                ) {
+                )
+                {
                     throw new ArgumentException(
                         $"Return statement is not supported inside ForEach.");
                 }
@@ -333,15 +364,19 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
             var indexName = (string?)null;
             var indexParameter = lambdaParameters.First();
             if (indexParameter.Type!.ToString() == "int" &&
-                !indexParameter.Modifiers.Any()) {
+                !indexParameter.Modifiers.Any())
+            {
                 indexName = indexParameter.Identifier.ToString();
             }
 
             var components = new List<ForEachArgInfo>(lambdaParameters.Count);
 
-            foreach (var parameter in lambdaParameters) {
-                foreach (var modifier in parameter.Modifiers) {
-                    switch (modifier.Kind()) {
+            foreach (var parameter in lambdaParameters)
+            {
+                foreach (var modifier in parameter.Modifiers)
+                {
+                    switch (modifier.Kind())
+                    {
                         case SyntaxKind.InKeyword:
                             components.Add(new ForEachArgInfo(
                                 parameter.Type!.ToString(),
@@ -366,7 +401,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
     private record ForEachArgInfo(string Type, string Identifier, bool IsReadOnly);
 
 
-    private record WhereLambdaInfo(string ParameterName, string Body, string Lambda) {
+    private record WhereLambdaInfo(string ParameterName, string Body, string Lambda)
+    {
 
         /// <summary>
         /// Extracts info from IEnumerable.Where(x => ...) invocation.
@@ -376,17 +412,20 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
         /// </returns>
         public static WhereLambdaInfo FromInvocationSyntax(
             InvocationExpressionSyntax invocation
-        ) {
+        )
+        {
             var childNodes = new List<SyntaxNode>(2);
             childNodes.AddRange(invocation.ChildNodes());
-            if (childNodes.Count != 2) {
+            if (childNodes.Count != 2)
+            {
                 throw new ArgumentException(
                     $"Unexpected child node count: {childNodes.Count}.");
             }
 
             var memberName =
                 ((MemberAccessExpressionSyntax)childNodes[0]).Name.ToString();
-            if (memberName != "Where") {
+            if (memberName != "Where")
+            {
                 throw new ArgumentException(
                     $"Unexpected member name: '{memberName}'.");
             }
@@ -397,7 +436,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
                 .ChildNodes()
                 .First();
 
-            if (arg is not LambdaExpressionSyntax lambda) {
+            if (arg is not LambdaExpressionSyntax lambda)
+            {
                 throw new ArgumentException(
                     $"Unexpected argument type: {arg.GetType()}");
             }
@@ -416,14 +456,17 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
         /// <summary>
         /// Extracts info from IEnumerable.Where(x => ...).Where(x => ...) invocation.
         /// </summary>
-        public static List<WhereLambdaInfo> FromExpression(ExpressionSyntax expression) {
+        public static List<WhereLambdaInfo> FromExpression(ExpressionSyntax expression)
+        {
             var infoList = new List<WhereLambdaInfo>();
 
             var invocation = expression.ChildNodes().First()
                 as InvocationExpressionSyntax;
 
-            while (invocation != null) {
-                if (FromInvocationSyntax(invocation) is { } info) {
+            while (invocation != null)
+            {
+                if (FromInvocationSyntax(invocation) is { } info)
+                {
                     infoList.Add(info);
                 }
 
@@ -437,19 +480,23 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
     }
 
 
-    public record NodeInfo(string Kind, string Text, List<NodeInfo> Children) {
-        public NodeInfo() : this("", "", new List<NodeInfo>()) {
+    public record NodeInfo(string Kind, string Text, List<NodeInfo> Children)
+    {
+        public NodeInfo() : this("", "", new List<NodeInfo>())
+        {
         }
 
 
-        public static NodeInfo FromSyntaxNode(SyntaxNode node) {
+        public static NodeInfo FromSyntaxNode(SyntaxNode node)
+        {
             var info = new NodeInfo(
                 node.Kind().ToString(),
                 node.ToString(),
                 new List<NodeInfo>()
             );
 
-            foreach (var child in node.ChildNodes()) {
+            foreach (var child in node.ChildNodes())
+            {
                 info.Children.Add(FromSyntaxNode(child));
             }
 
@@ -457,7 +504,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
         }
 
 
-        public string ToXml() {
+        public string ToXml()
+        {
             using var stringWriter = new StringWriter();
             var serializer = new XmlSerializer(typeof(NodeInfo));
             serializer.Serialize(stringWriter, this);
@@ -465,12 +513,14 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
         }
 
 
-        public string ToJson() {
+        public string ToJson()
+        {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
 
-        public string ToYaml() {
+        public string ToYaml()
+        {
             var serializer = new YamlDotNet.Serialization.SerializerBuilder()
                 .WithNamingConvention(YamlDotNet.Serialization.NamingConventions
                     .CamelCaseNamingConvention.Instance)

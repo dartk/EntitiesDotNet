@@ -1,7 +1,9 @@
-﻿namespace EntityComponentSystem; 
+﻿namespace EntityComponentSystem;
 
 
-public class GeneratedFromAttribute : Attribute {
-    public GeneratedFromAttribute(string name) {
+public class GeneratedFromAttribute : Attribute
+{
+    public GeneratedFromAttribute(string name)
+    {
     }
 }

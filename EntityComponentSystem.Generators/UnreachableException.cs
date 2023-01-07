@@ -1,11 +1,14 @@
 ﻿namespace EntityComponentSystem.Generators;
 
 
-internal class UnreachableException : Exception {
-    public UnreachableException() {
+internal class UnreachableException : Exception
+{
+    public UnreachableException()
+    {
     }
 
 
-    public UnreachableException(string message) : base(message) {
+    public UnreachableException(string message) : base(message)
+    {
     }
 }

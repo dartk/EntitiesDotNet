@@ -1,7 +1,8 @@
 namespace EntityComponentSystem;
 
 
-public interface IComponentArray {
+public interface IComponentArray
+{
     Archetype Archetype { get; }
     int Count { get; }
     void Add(int count = 1);

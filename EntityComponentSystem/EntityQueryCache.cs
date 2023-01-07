@@ -1,12 +1,14 @@
 namespace EntityComponentSystem;
 
 
-public class EntityQueryCache {
-    
+public class EntityQueryCache
+{
+
     public EntityQueryCache(
         EntityManager entityManager,
         params Func<IComponentArray, bool>[] predicates
-    ) {
+    )
+    {
         this.EntityManager = entityManager;
         this.PredicateArray = predicates;
         this.Version = -1;
@@ -25,22 +27,28 @@ public class EntityQueryCache {
         this.Entities.GetEnumerator();
 
 
-    public void Update() {
-        if (this.Version == this.EntityManager.Version) {
+    public void Update()
+    {
+        if (this.Version == this.EntityManager.Version)
+        {
             return;
         }
 
         this._entities.Clear();
-        foreach (var array in this.EntityManager.Entities) {
+        foreach (var array in this.EntityManager.Entities)
+        {
             var predicateIsSuccessful = true;
-            foreach (var predicate in this.PredicateArray.AsSpan()) {
-                if (!predicate(array)) {
+            foreach (var predicate in this.PredicateArray.AsSpan())
+            {
+                if (!predicate(array))
+                {
                     predicateIsSuccessful = false;
                     break;
                 }
             }
 
-            if (predicateIsSuccessful) {
+            if (predicateIsSuccessful)
+            {
                 this._entities.Add(array);
             }
         }
@@ -50,5 +58,5 @@ public class EntityQueryCache {
 
 
     private readonly ResizableArray<IComponentArray> _entities;
-    
+
 }

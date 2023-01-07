@@ -1,21 +1,25 @@
 ﻿namespace EntityComponentSystem;
 
 
-public static class ComponentType<T> {
+public static class ComponentType<T>
+{
     public static readonly ComponentType Instance = ComponentType.Instance(typeof(T));
 }
 
 
-public class ComponentType : IComparable<ComponentType> {
+public class ComponentType : IComparable<ComponentType>
+{
     public readonly Type Type;
     public readonly int Id;
 
-    public override string ToString() {
+    public override string ToString()
+    {
         return this.Type.ToString();
     }
 
 
-    public int CompareTo(ComponentType? other) {
+    public int CompareTo(ComponentType? other)
+    {
         if (ReferenceEquals(this, other)) return 0;
         if (ReferenceEquals(null, other)) return 1;
 
@@ -26,12 +30,16 @@ public class ComponentType : IComparable<ComponentType> {
     public static ComponentType Instance<T>() => ComponentType<T>.Instance;
 
 
-    public static ComponentType Instance(Type type) {
-        lock (ComponentTypes) {
+    public static ComponentType Instance(Type type)
+    {
+        lock (ComponentTypes)
+        {
             var count = ComponentTypes.Count;
-            for (var i = 0; i < count; ++i) {
+            for (var i = 0; i < count; ++i)
+            {
                 var componentType = ComponentTypes[i];
-                if (componentType.Type == type) {
+                if (componentType.Type == type)
+                {
                     return componentType;
                 }
             }
@@ -49,13 +57,14 @@ public class ComponentType : IComparable<ComponentType> {
     public static implicit operator Type(ComponentType type) => type.Type;
 
 
-    private ComponentType(int id, Type type) {
+    private ComponentType(int id, Type type)
+    {
         this.Id = id;
         this.Type = type;
     }
 
 
-    private static readonly ResizableArray<ComponentType> ComponentTypes = new () {
+    private static readonly ResizableArray<ComponentType> ComponentTypes = new() {
         new ComponentType(0, typeof(EntityId))
     };
 

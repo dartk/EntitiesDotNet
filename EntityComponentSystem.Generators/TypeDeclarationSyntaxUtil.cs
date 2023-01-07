@@ -5,10 +5,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace EntityComponentSystem.Generators;
 
 
-public static class TypeDeclarationSyntaxUtil {
+public static class TypeDeclarationSyntaxUtil
+{
 
-    public static string? ToString(SyntaxNode node) {
-        return node switch {
+    public static string? ToString(SyntaxNode node)
+    {
+        return node switch
+        {
             StructDeclarationSyntax @struct => ToString(@struct),
             ClassDeclarationSyntax @class => ToString(@class),
             RecordDeclarationSyntax @record => ToString(@record),
@@ -31,10 +34,13 @@ public static class TypeDeclarationSyntaxUtil {
 }
 
 
-public static class NamespaceSyntaxUtil {
+public static class NamespaceSyntaxUtil
+{
 
-    public static string? ToString(SyntaxNode node) {
-        return node switch {
+    public static string? ToString(SyntaxNode node)
+    {
+        return node switch
+        {
             StructDeclarationSyntax @struct => ToString(@struct),
             ClassDeclarationSyntax @class => ToString(@class),
             RecordDeclarationSyntax @record => ToString(@record),

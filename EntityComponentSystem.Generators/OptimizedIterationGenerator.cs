@@ -11,7 +11,8 @@ namespace EntityComponentSystem.Generators;
 
 [Generator]
 public class OptimizedIterationGenerator :
-    IncrementalGeneratorBase<OptimizedIterationGenerator.Info> {
+    IncrementalGeneratorBase<OptimizedIterationGenerator.Info>
+{
 
     private const string GenerateOptimized = nameof(GenerateOptimized);
     private const string GenerateOptimizedAttribute = nameof(GenerateOptimizedAttribute);
@@ -20,8 +21,10 @@ public class OptimizedIterationGenerator :
     public record Info(string FileName, string Source);
 
 
-    protected override bool Choose(SyntaxNode node, CancellationToken token) {
-        if (node is not AttributeSyntax attributeSyntax) {
+    protected override bool Choose(SyntaxNode node, CancellationToken token)
+    {
+        if (node is not AttributeSyntax attributeSyntax)
+        {
             return false;
         }
 
@@ -33,10 +36,12 @@ public class OptimizedIterationGenerator :
     protected override Info? Select(
         GeneratorSyntaxContext context,
         CancellationToken token
-    ) {
+    )
+    {
         var attribute = (AttributeSyntax)context.Node;
         var methodSyntax = (MethodDeclarationSyntax?)attribute.Parent?.Parent;
-        if (methodSyntax == null) {
+        if (methodSyntax == null)
+        {
             throw new UnreachableException(
                 $"{nameof(MethodDeclarationSyntax)} is not found.");
         }
@@ -51,21 +56,26 @@ public class OptimizedIterationGenerator :
     protected override void Produce(
         SourceProductionContext context,
         ImmutableArray<Info> items
-    ) {
-        foreach (var item in items) {
+    )
+    {
+        foreach (var item in items)
+        {
             context.AddSource(item.FileName, item.Source);
         }
     }
 
 
-    private static string GenerateSourceFile(SyntaxNode node, Func<string> getContent) {
+    private static string GenerateSourceFile(SyntaxNode node, Func<string> getContent)
+    {
         var source = new StringBuilder();
 
         source.AppendLine(getContent());
 
         var ancestors = node.AncestorsAndSelf();
-        foreach (var ancestor in ancestors) {
-            if (TypeDeclarationSyntaxUtil.ToString(ancestor) is { } str) {
+        foreach (var ancestor in ancestors)
+        {
+            if (TypeDeclarationSyntaxUtil.ToString(ancestor) is { } str)
+            {
                 source.Insert(0,
                     Environment.NewLine
                     + str + " {"
@@ -77,12 +87,14 @@ public class OptimizedIterationGenerator :
             var usingList = ancestor.ChildNodes()
                 .Where(x => x is UsingDirectiveSyntax or UsingStatementSyntax);
 
-            foreach (var item in usingList) {
+            foreach (var item in usingList)
+            {
                 source.Insert(0, item + Environment.NewLine);
             }
 
             {
-                if (ancestor is NamespaceDeclarationSyntax @namespace) {
+                if (ancestor is NamespaceDeclarationSyntax @namespace)
+                {
                     source.Insert(0,
                         Environment.NewLine
                         + $"namespace {@namespace.Name} {{"
@@ -93,7 +105,8 @@ public class OptimizedIterationGenerator :
             }
 
             {
-                if (ancestor is FileScopedNamespaceDeclarationSyntax @namespace) {
+                if (ancestor is FileScopedNamespaceDeclarationSyntax @namespace)
+                {
                     source.Insert(0,
                         Environment.NewLine
                         + $"namespace {@namespace.Name};"
@@ -107,7 +120,8 @@ public class OptimizedIterationGenerator :
 
 
     private static (IdentifierNameSyntax Target, IdentifierNameSyntax Method)
-        GetInvocationNames(InvocationExpressionSyntax node) {
+        GetInvocationNames(InvocationExpressionSyntax node)
+    {
         var memberAccess = node.ChildNodes().OfType<MemberAccessExpressionSyntax>()
             .First();
 
@@ -115,7 +129,8 @@ public class OptimizedIterationGenerator :
             .OfType<IdentifierNameSyntax>()
             .ToList();
 
-        if (childNodes.Count != 2) {
+        if (childNodes.Count != 2)
+        {
             throw new UnreachableException(
                 $"Unexpected number of child nodes ({childNodes.Count}) for {nameof(InvocationExpressionSyntax)}");
         }
@@ -124,7 +139,8 @@ public class OptimizedIterationGenerator :
     }
 
 
-    private static string GenerateMethod(MethodDeclarationSyntax methodSyntax) {
+    private static string GenerateMethod(MethodDeclarationSyntax methodSyntax)
+    {
         var source = new StringBuilder();
 
         var parameterList = (ParameterListSyntax)methodSyntax.ChildNodes()
@@ -140,7 +156,8 @@ public class OptimizedIterationGenerator :
 
         var blockText = block.GetText();
         var lastPosition = 0;
-        foreach (var invocation in invocations) {
+        foreach (var invocation in invocations)
+        {
             var span = TextSpan.FromBounds(
                 lastPosition, invocation.SpanStart - block.SpanStart);
             var text = blockText.ToString(span);
@@ -172,20 +189,24 @@ public class OptimizedIterationGenerator :
     private static IEnumerable<InvocationExpressionSyntax> ChooseForEachInvocations(
         SyntaxNode node,
         string componentArrayName
-    ) {
+    )
+    {
         var lambdas = node.DescendantNodesAndSelf()
             .OfType<ParenthesizedLambdaExpressionSyntax>();
 
-        foreach (var lambda in lambdas) {
+        foreach (var lambda in lambdas)
+        {
             if (lambda?.Parent?.Parent?.Parent is not InvocationExpressionSyntax
                 invocation
-            ) {
+            )
+            {
                 continue;
             }
 
             var (target, method) = GetInvocationNames(invocation);
             if (target.ToString() == componentArrayName &&
-                method.ToString() == "ForEach") {
+                method.ToString() == "ForEach")
+            {
                 yield return invocation;
             }
         }
@@ -194,7 +215,8 @@ public class OptimizedIterationGenerator :
 
     private static string GenerateComponentArrayForEach(
         InvocationExpressionSyntax foreachInvocation
-    ) {
+    )
+    {
         var lambda = foreachInvocation
             .DescendantNodes()
             .OfType<ParenthesizedLambdaExpressionSyntax>()
@@ -207,9 +229,12 @@ public class OptimizedIterationGenerator :
         var writeComponents = new List<ParameterSyntax>();
 
         var lambdaParameters = lambda.ParameterList.Parameters;
-        foreach (var componentParameter in lambdaParameters) {
-            foreach (var modifier in componentParameter.Modifiers) {
-                switch (modifier.Kind()) {
+        foreach (var componentParameter in lambdaParameters)
+        {
+            foreach (var modifier in componentParameter.Modifiers)
+            {
+                switch (modifier.Kind())
+                {
                     case SyntaxKind.InKeyword:
                         readComponents.Add(componentParameter);
                         break;
@@ -222,10 +247,11 @@ public class OptimizedIterationGenerator :
 
         var indexName = (string?)null;
         var indexParameter = lambdaParameters.First();
-        if (indexParameter.Type!.ToString() == "int" && !indexParameter.Modifiers.Any()) {
+        if (indexParameter.Type!.ToString() == "int" && !indexParameter.Modifiers.Any())
+        {
             indexName = indexParameter.Identifier.ToString();
         }
-        
+
         // "T0, T1, ..."
         var componentsStr = string.Join(", ",
             readComponents.Concat(writeComponents).Select(x => x.Type!.ToString()));
@@ -233,15 +259,13 @@ public class OptimizedIterationGenerator :
         return $$"""
     if ({{arrayName}}.Archetype.Contains<{{componentsStr}}>()) {
         var _count = {{arrayName}}.Count;
-        {{
-            string.Join(" ", readComponents.Select(
+        {{string.Join(" ", readComponents.Select(
                     x => $"ref var {x.Identifier} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference({arrayName}.GetReadOnlySpan<{x.Type}>());")
                 .Concat(writeComponents.Select(
-                    x => $"ref var {x.Identifier} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference({arrayName}.GetSpan<{x.Type}>());")))
-        }}
+                    x => $"ref var {x.Identifier} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference({arrayName}.GetSpan<{x.Type}>());")))}}
 
         for (var _i = 0; _i < _count; ++_i) {
-            {{( indexName != null ? $"var {indexName} = _i;" : "")}}
+            {{(indexName != null ? $"var {indexName} = _i;" : "")}}
 
             #region Body
 
@@ -253,12 +277,10 @@ public class OptimizedIterationGenerator :
 
             #endregion
 
-            {{
-                string.Join(" ", readComponents.Select(
+            {{string.Join(" ", readComponents.Select(
                         x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);")
                     .Concat(writeComponents.Select(
-                        x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);")))
-            }}
+                        x => $"{x.Identifier} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {x.Identifier}, 1);")))}}
         }
     }
 """;

@@ -1,12 +1,14 @@
 ﻿using Xunit.Abstractions;
 
 
-namespace EntityComponentSystem.Tests; 
+namespace EntityComponentSystem.Tests;
 
 
-public class EntityManagerTests {
-    
-    public EntityManagerTests(ITestOutputHelper output) {
+public class EntityManagerTests
+{
+
+    public EntityManagerTests(ITestOutputHelper output)
+    {
         this.Output = output;
     }
 
@@ -15,7 +17,8 @@ public class EntityManagerTests {
 
 
     [Fact]
-    public void Foo() {
+    public void Foo()
+    {
         var manager = new EntityManager();
         manager.CreateEntity(10);
         manager.CreateEntity(12, 120.0f);

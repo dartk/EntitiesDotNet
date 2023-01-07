@@ -1,6 +1,7 @@
-﻿namespace EntityComponentSystem; 
+﻿namespace EntityComponentSystem;
 
 
 [AttributeUsage(AttributeTargets.Struct)]
-public class QueryAttribute : Attribute {
+public class QueryAttribute : Attribute
+{
 }

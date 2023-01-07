@@ -4,16 +4,19 @@
 namespace EntityComponentSystem;
 
 
-public static class ResizableArray {
+public static class ResizableArray
+{
     public static T[] InternalArray<T>(ResizableArray<T> array) =>
         ResizableArray<T>.InternalArray(array);
 }
 
 
-public class ReadOnlyArray<T> : IReadOnlyList<T> {
+public class ReadOnlyArray<T> : IReadOnlyList<T>
+{
 
 
-    public ReadOnlyArray(ResizableArray<T> array) {
+    public ReadOnlyArray(ResizableArray<T> array)
+    {
         this._array = array;
     }
 
@@ -34,17 +37,20 @@ public class ReadOnlyArray<T> : IReadOnlyList<T> {
     T IReadOnlyList<T>.this[int index] => this[index];
 
 
-    public ReadOnlySpan<T>.Enumerator GetEnumerator() {
+    public ReadOnlySpan<T>.Enumerator GetEnumerator()
+    {
         return this.AsSpan().GetEnumerator();
     }
 
 
-    IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
         return ((IEnumerable<T>)this._array).GetEnumerator();
     }
 
 
-    IEnumerator IEnumerable.GetEnumerator() {
+    IEnumerator IEnumerable.GetEnumerator()
+    {
         return ((IEnumerable)this._array).GetEnumerator();
     }
 
@@ -61,23 +67,28 @@ public class ReadOnlyArray<T> : IReadOnlyList<T> {
 /// <summary>
 /// Класс, аналогичный <see cref="List{T}"/>, но предоставляющий доступ к Span.
 /// </summary>
-public class ResizableArray<T> : IList<T> {
+public class ResizableArray<T> : IList<T>
+{
 
-    public ResizableArray() {
+    public ResizableArray()
+    {
         this._items = Array.Empty<T>();
         this._readOnly = new ReadOnlyArray<T>(this);
     }
 
 
-    public ResizableArray(int capacity) {
+    public ResizableArray(int capacity)
+    {
         this._items = new T[capacity];
         this._readOnly = new ReadOnlyArray<T>(this);
     }
 
 
-    public bool Remove(T item) {
+    public bool Remove(T item)
+    {
         var index = this.IndexOf(item);
-        if (index < 0) {
+        if (index < 0)
+        {
             return false;
         }
 
@@ -106,24 +117,30 @@ public class ResizableArray<T> : IList<T> {
     /// <exception cref="T:System.OutOfMemoryException">
     /// There is not enough memory available on the system.
     /// </exception>
-    public int Capacity {
+    public int Capacity
+    {
         get => this._items.Length;
-        set {
-            if (value < this._size) {
+        set
+        {
+            if (value < this._size)
+            {
                 throw new ArgumentOutOfRangeException();
             }
 
-            if (value == this._items.Length) {
+            if (value == this._items.Length)
+            {
                 return;
             }
 
-            if (value == 0) {
+            if (value == 0)
+            {
                 this._items = Array.Empty<T>();
                 return;
             }
 
             var destinationArray = new T[value];
-            if (this._size > 0) {
+            if (this._size > 0)
+            {
                 Array.Copy(this._items, 0, destinationArray, 0, this._size);
             }
 
@@ -136,9 +153,12 @@ public class ResizableArray<T> : IList<T> {
     public bool IsNotEmpty => this._size > 0;
 
 
-    public ref T this[int index] {
-        get {
-            if ((uint)index >= (uint)this._size) {
+    public ref T this[int index]
+    {
+        get
+        {
+            if ((uint)index >= (uint)this._size)
+            {
                 throw new IndexOutOfRangeException();
             }
 
@@ -147,7 +167,8 @@ public class ResizableArray<T> : IList<T> {
     }
 
 
-    T IList<T>.this[int index] {
+    T IList<T>.this[int index]
+    {
         get => this._items[index];
         set => this._items[index] = value;
     }
@@ -162,7 +183,8 @@ public class ResizableArray<T> : IList<T> {
     /// <summary>
     /// Adds an object to the end of the <see cref="ResizableArray{T}" />.
     /// </summary>
-    public void Add(T item) {
+    public void Add(T item)
+    {
         this.EnsureCapacity(this._size + 1);
 
         this._items[this._size++] = item;
@@ -202,26 +224,33 @@ public class ResizableArray<T> : IList<T> {
     /// -or-
     /// <paramref name="index" /> is greater than <see cref="Count" />.
     /// </exception>
-    public void InsertRange(int index, IEnumerable<T> collection) {
-        if ((uint)index > (uint)this._size) {
+    public void InsertRange(int index, IEnumerable<T> collection)
+    {
+        if ((uint)index > (uint)this._size)
+        {
             throw new ArgumentOutOfRangeException();
         }
 
-        if (collection is ICollection<T> objs) {
+        if (collection is ICollection<T> objs)
+        {
             var count = objs.Count;
-            if (count > 0) {
+            if (count > 0)
+            {
                 this.EnsureCapacity(this._size + count);
-                if (index < this._size) {
+                if (index < this._size)
+                {
                     Array.Copy(this._items, index, this._items,
                         index + count, this._size - index);
                 }
 
-                if (this.Equals(objs)) {
+                if (this.Equals(objs))
+                {
                     Array.Copy(this._items, 0, this._items, index, index);
                     Array.Copy(this._items, index + count, this._items,
                         index * 2, this._size - index);
                 }
-                else {
+                else
+                {
                     var array = new T[count];
                     objs.CopyTo(array, 0);
                     array.CopyTo(this._items, index);
@@ -230,15 +259,18 @@ public class ResizableArray<T> : IList<T> {
                 this._size += count;
             }
         }
-        else {
-            foreach (var obj in collection) {
+        else
+        {
+            foreach (var obj in collection)
+            {
                 this.Insert(index++, obj);
             }
         }
     }
 
 
-    public int IndexOf(T item) {
+    public int IndexOf(T item)
+    {
         return Array.IndexOf(this._items, item, 0, this._size);
     }
 
@@ -251,16 +283,20 @@ public class ResizableArray<T> : IList<T> {
     /// -or-
     /// <paramref name="index" /> is greater than <see cref="Count" />.
     /// </exception>
-    public void Insert(int index, T item) {
-        if ((uint)index > (uint)this._size) {
+    public void Insert(int index, T item)
+    {
+        if ((uint)index > (uint)this._size)
+        {
             throw new ArgumentOutOfRangeException();
         }
 
-        if (this._size == this._items.Length) {
+        if (this._size == this._items.Length)
+        {
             this.EnsureCapacity(this._size + 1);
         }
 
-        if (index < this._size) {
+        if (index < this._size)
+        {
             Array.Copy(this._items, index, this._items, index + 1, this._size - index);
         }
 
@@ -269,13 +305,16 @@ public class ResizableArray<T> : IList<T> {
     }
 
 
-    public void RemoveAt(int index) {
-        if ((uint)index >= (uint)this._size) {
+    public void RemoveAt(int index)
+    {
+        if ((uint)index >= (uint)this._size)
+        {
             throw new ArgumentOutOfRangeException();
         }
 
         --this._size;
-        if (index < this._size) {
+        if (index < this._size)
+        {
             Array.Copy(this._items, index + 1, this._items, index, this._size - index);
         }
 
@@ -286,8 +325,10 @@ public class ResizableArray<T> : IList<T> {
     /// <summary>
     /// Removes all elements from the <see cref="ResizableArray{T}" />.
     /// </summary>
-    public void Clear() {
-        if (this.IsEmpty) {
+    public void Clear()
+    {
+        if (this.IsEmpty)
+        {
             return;
         }
 
@@ -296,22 +337,27 @@ public class ResizableArray<T> : IList<T> {
     }
 
 
-    bool ICollection<T>.Contains(T item) {
+    bool ICollection<T>.Contains(T item)
+    {
         return this.IndexOf(item) >= 0;
     }
 
 
-    void ICollection<T>.CopyTo(T[] array, int arrayIndex) {
-        if (array.Rank != 1) {
+    void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+    {
+        if (array.Rank != 1)
+        {
             throw new ArgumentException(
                 "Cannot copy to array. Array cannot be multidimensional."
             );
         }
 
-        try {
+        try
+        {
             Array.Copy(this._items, 0, array, arrayIndex, this._size);
         }
-        catch (ArrayTypeMismatchException) {
+        catch (ArrayTypeMismatchException)
+        {
             throw new ArgumentException(
                 "Cannot copy to array. Array has mismatched value type."
             );
@@ -322,12 +368,14 @@ public class ResizableArray<T> : IList<T> {
     public Span<T>.Enumerator GetEnumerator() => this.AsSpan().GetEnumerator();
 
 
-    IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
         return new Enumerator(this);
     }
 
 
-    IEnumerator IEnumerable.GetEnumerator() {
+    IEnumerator IEnumerable.GetEnumerator()
+    {
         return new Enumerator(this);
     }
 
@@ -358,17 +406,21 @@ public class ResizableArray<T> : IList<T> {
     private readonly ReadOnlyArray<T> _readOnly;
 
 
-    private void EnsureCapacity(int min) {
-        if (this._items.Length >= min) {
+    private void EnsureCapacity(int min)
+    {
+        if (this._items.Length >= min)
+        {
             return;
         }
 
         var num = this._items.Length == 0 ? DEFAULT_CAPACITY : this._items.Length * 2;
-        if ((uint)num > 2146435071U) {
+        if ((uint)num > 2146435071U)
+        {
             num = 2146435071;
         }
 
-        if (num < min) {
+        if (num < min)
+        {
             num = min;
         }
 
@@ -379,25 +431,30 @@ public class ResizableArray<T> : IList<T> {
     #endregion
 
 
-    private class Enumerator : IEnumerator<T> {
+    private class Enumerator : IEnumerator<T>
+    {
 
-        public Enumerator(ResizableArray<T> array) {
+        public Enumerator(ResizableArray<T> array)
+        {
             this._array = array;
             this._index = -1;
         }
 
 
-        public void Dispose() {
+        public void Dispose()
+        {
         }
 
 
-        public bool MoveNext() {
+        public bool MoveNext()
+        {
             ++this._index;
             return (uint)this._index < (uint)this._array._size;
         }
 
 
-        public void Reset() {
+        public void Reset()
+        {
             this._index = -1;
         }
 

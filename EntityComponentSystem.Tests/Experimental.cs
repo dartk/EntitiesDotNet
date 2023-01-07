@@ -5,8 +5,10 @@ using Xunit.Abstractions;
 namespace EntityComponentSystem.Tests;
 
 
-public partial class IterationTests {
-    public IterationTests(ITestOutputHelper output) {
+public partial class IterationTests
+{
+    public IterationTests(ITestOutputHelper output)
+    {
         this.Output = output;
     }
 
