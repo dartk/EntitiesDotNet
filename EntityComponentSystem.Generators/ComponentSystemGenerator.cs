@@ -53,7 +53,7 @@ public class ComponentSystemGenerator :
         }
 
         var classDeclarationSyntax = methodDeclarationSyntax.Ancestors()
-            .OfType<ClassDeclarationSyntax>().First();
+            .OfType<RecordDeclarationSyntax>().First();
 
         var source = GenerateSourceFile(classDeclarationSyntax, () =>
             GenerateComponentSystemClass(
@@ -145,7 +145,7 @@ public class ComponentSystemGenerator :
 
 
     private static string GenerateComponentSystemClass(
-        ClassDeclarationSyntax classDeclarationSyntax,
+        RecordDeclarationSyntax classDeclarationSyntax,
         MethodDeclarationSyntax methodSyntax
     )
     {
@@ -188,8 +188,9 @@ public class ComponentSystemGenerator :
         source.AppendLine();
         source.AppendLine(@"void IComponentSystem_Generated.OnExecute()");
 
-        var blockText = methodBlock.GetText();
-        var lastPosition = 0;
+        var sourceText = methodBlock.SyntaxTree.GetText();
+        
+        var lastPosition = methodBlock.SpanStart;
         for (var i = 0; i < forEachInvocations.Count; ++i)
         {
             var invocation = forEachInvocations[i];
@@ -197,18 +198,18 @@ public class ComponentSystemGenerator :
             var statement = invocation.Ancestors()
                 .OfType<ExpressionStatementSyntax>().First();
 
-            var span = TextSpan.FromBounds(
-                lastPosition, statement.SpanStart - methodBlock.SpanStart);
-            var text = blockText.ToString(span);
-            source.AppendLine(text);
-            source.AppendLine(
-                GenerateOptimizedForEach(foreachInfos[i], filters[i], CacheName(i)));
+            var sourceTextBeforeForEach =
+                sourceText.ToString(TextSpan.FromBounds(lastPosition, statement.SpanStart));
+            
+            source.AppendLine(sourceTextBeforeForEach);
+            source.AppendLine(GenerateOptimizedForEach(foreachInfos[i], filters[i], CacheName(i)));
 
-            lastPosition = statement.Span.End - methodBlock.SpanStart;
+            lastPosition = statement.Span.End;
         }
 
-        source.AppendLine(blockText.ToString(TextSpan.FromBounds(
-            lastPosition, methodBlock.Span.Length)));
+        source.AppendLine(
+            sourceText.ToString(TextSpan.FromBounds(lastPosition, methodBlock.Span.End)));
+        
         source.AppendLine("}");
 
         return source.ToString();

@@ -7,7 +7,6 @@ namespace EntityComponentSystem.Benchmarks;
 
 public partial class ComponentSystemBenchmark
 {
-
     [Params(10_000_000)]
     public int N { get; set; }
 
@@ -32,7 +31,7 @@ public partial class ComponentSystemBenchmark
             velocities[i].Vector = new Vector3(random.NextSingle());
         }
 
-        this._system = entityManager.CreateSystem<BenchmarkSystem>();
+        this._system = new BenchmarkSystem(entityManager.Entities);
     }
 
 
@@ -46,18 +45,17 @@ public partial class ComponentSystemBenchmark
     private BenchmarkSystem _system;
 
 
-    private partial class BenchmarkSystem : ComponentSystem
+    private partial record BenchmarkSystem(ReadOnlyArray<IComponentArray> Components)
+        : ComponentSystem(Components)
     {
-
         [GenerateOnExecute]
         protected override void OnExecute()
         {
             var deltaTime = 1f / 60f;
-            this.Entities.ForEach((in Velocity velocity, ref Translation translation) =>
+            this.Components.ForEach((in Velocity velocity, ref Translation translation) =>
             {
                 translation += deltaTime * velocity.Vector;
             });
         }
-
     }
 }

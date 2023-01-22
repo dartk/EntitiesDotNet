@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Xunit.Abstractions;
+﻿using Xunit.Abstractions;
 
 
 namespace EntityComponentSystem.Tests;
@@ -41,44 +40,43 @@ public class ComponentSystemsTests
         entityManager.CreateEntity(Archetype.Instance<int>().WithShared(false));
         entityManager.CreateEntity(Archetype.Instance<int>().WithShared(true));
 
-        var system = new TestSystem(this.Output, entityManager);
+        var system = new TestSystem(entityManager, this.Output);
         system.Execute();
     }
 }
 
 
-public partial class TestSystem : ComponentSystem
+public partial record AnotherSystem(ReadOnlyArray<IComponentArray> Components)
+    : ComponentSystem(Components)
 {
-
-    public TestSystem(ITestOutputHelper output, EntityManager em)
+    protected override void OnExecute()
     {
-        this.Output = output;
-        this.Init(em);
+        throw new NotImplementedException();
     }
+}
 
 
-    public ITestOutputHelper Output { get; }
-
-
+public partial record TestSystem(EntityManager EntityManager, ITestOutputHelper Output)
+    : ComponentSystem(EntityManager.Entities)
+{
     [GenerateOnExecute]
     protected override void OnExecute()
     {
         var deltaTime = 1f / 60f;
-        this.Entities.ForEach(
+        this.Components.ForEach(
             (in Velocity velocity, ref Translation translation) =>
             {
                 translation = deltaTime * velocity;
             });
 
-        this.Entities
+        this.Components
             .Where(x => x.Archetype.Contains(SharedComponent.Instance(false)))
             .ForEach((ref int i) => i = -1);
 
-        this.Entities
+        this.Components
             .Where(x => x.Archetype.Contains(SharedComponent.Instance(true)))
             .ForEach((ref int i) => i = 1);
 
         this.Output.WriteLine(this.EntityManager.ToReadableString());
     }
-
 }

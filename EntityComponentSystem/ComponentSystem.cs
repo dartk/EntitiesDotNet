@@ -1,33 +1,25 @@
 ﻿namespace EntityComponentSystem;
 
 
-public abstract class ComponentSystem
+public abstract record ComponentSystem
 {
-
-    public ComponentSystem()
+    public ComponentSystem(ReadOnlyArray<IComponentArray> components)
     {
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        this._generated = this as IComponentSystem_Generated;
-    }
-
-
-    public EntityManager EntityManager => this._entityManager!;
-
-
-    public void Init(EntityManager entityManager)
-    {
-        if (this._entityManager != null)
+        this.Components = components;
+        if (this is IComponentSystem_Generated generated)
         {
-            throw new InvalidOperationException("Already initialized.");
+            this._generated = generated;
+            this._generated.OnInit();
         }
-
-        this._entityManager = entityManager;
-        this._generated?.OnInit();
     }
+
+
+    public ReadOnlyArray<IComponentArray> Components { get; }
 
 
     public void Execute()
     {
+        // ReSharper disable once SuspiciousTypeConversion.Global
         if (this._generated != null)
         {
             this._generated.OnExecute();
@@ -40,11 +32,6 @@ public abstract class ComponentSystem
 
     protected abstract void OnExecute();
 
-
-    protected ReadOnlyArray<IComponentArray> Entities => this.EntityManager.Entities;
-
-
+    
     private readonly IComponentSystem_Generated? _generated;
-    private EntityManager? _entityManager;
-
 }

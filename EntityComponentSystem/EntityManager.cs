@@ -149,15 +149,6 @@ public partial class EntityManager
     }
 
 
-    public TSystem CreateSystem<TSystem>()
-        where TSystem : ComponentSystem, new()
-    {
-        var system = new TSystem();
-        system.Init(this);
-        return system;
-    }
-
-
     #region Private
 
 
