@@ -4,17 +4,17 @@
 namespace EntityComponentSystem;
 
 
-public partial class EntityManager
+public partial class EntityManager : IHasVersion
 {
 
     public EntityManager()
     {
         this._arrays = new ResizableArray<IComponentArray>();
-        this.Entities = this._arrays;
+        this.Entities = new EntityArrays(this, this._arrays);
     }
 
 
-    public readonly ReadOnlyArray<IComponentArray> Entities;
+    public readonly EntityArrays Entities;
     public int Version { get; private set; }
 
 

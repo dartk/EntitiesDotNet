@@ -3,9 +3,9 @@
 
 public abstract record ComponentSystem
 {
-    public ComponentSystem(ReadOnlyArray<IComponentArray> components)
+    public ComponentSystem(EntityArrays entities)
     {
-        this.Components = components;
+        this.Entities = entities;
         if (this is IComponentSystem_Generated generated)
         {
             this._generated = generated;
@@ -14,13 +14,13 @@ public abstract record ComponentSystem
     }
 
 
-    public ReadOnlyArray<IComponentArray> Components { get; }
+    public EntityArrays Entities { get; }
 
 
-    public void Execute()
+    public void Execute(bool executeGenerated = true)
     {
         // ReSharper disable once SuspiciousTypeConversion.Global
-        if (this._generated != null)
+        if (executeGenerated && this._generated != null)
         {
             this._generated.OnExecute();
             return;

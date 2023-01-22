@@ -238,7 +238,7 @@ public class ComponentSystemGenerator :
 
         return $$"""
 this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
-    this.EntityManager,
+    this.Entities,
     {{string.Join("," + Environment.NewLine, predicateList)}}
 );
 """;

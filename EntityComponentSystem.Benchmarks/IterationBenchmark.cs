@@ -184,11 +184,11 @@ public partial class IterationBenchmark
     [Benchmark]
     public void GeneratedFromMethod()
     {
-        Process_Optimized(this._array);
+        // Process_Optimized(this._array);
     }
 
 
-    [GenerateOptimized]
+    // [GenerateOptimized]
     private static void Process(IComponentArray array)
     {
         array.ForEach((ref Translation translation) =>

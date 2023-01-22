@@ -1,26 +1,24 @@
 namespace EntityComponentSystem;
 
 
-public class EntityQueryCache
+public class EntityQueryCache : IHasVersion
 {
-
     public EntityQueryCache(
-        EntityManager entityManager,
+        EntityArrays entities,
         params Func<IComponentArray, bool>[] predicates
     )
     {
-        this.EntityManager = entityManager;
-        this.PredicateArray = predicates;
+        this._targetEntities = entities;
+        this.Predicates = predicates;
         this.Version = -1;
-        this._entities = new ResizableArray<IComponentArray>();
-        this.Entities = this._entities;
+        this._array = new ResizableArray<IComponentArray>();
+        this.Entities = new EntityArrays(this, this._array);
     }
 
 
-    public EntityManager EntityManager { get; }
-    public Func<IComponentArray, bool>[] PredicateArray { get; }
+    public Func<IComponentArray, bool>[] Predicates { get; }
     public int Version { get; private set; }
-    public ReadOnlyArray<IComponentArray> Entities { get; }
+    public EntityArrays Entities { get; }
 
 
     public ReadOnlySpan<IComponentArray>.Enumerator GetEnumerator() =>
@@ -29,34 +27,31 @@ public class EntityQueryCache
 
     public void Update()
     {
-        if (this.Version == this.EntityManager.Version)
-        {
-            return;
-        }
+        if (this.VersionsAreEqual(this._targetEntities)) return;
 
-        this._entities.Clear();
-        foreach (var array in this.EntityManager.Entities)
+        this._array.Clear();
+        foreach (var array in this._targetEntities)
         {
-            var predicateIsSuccessful = true;
-            foreach (var predicate in this.PredicateArray.AsSpan())
+            var allPredicatesSucceded = true;
+            foreach (var predicate in this.Predicates.AsSpan())
             {
                 if (!predicate(array))
                 {
-                    predicateIsSuccessful = false;
+                    allPredicatesSucceded = false;
                     break;
                 }
             }
 
-            if (predicateIsSuccessful)
+            if (allPredicatesSucceded)
             {
-                this._entities.Add(array);
+                this._array.Add(array);
             }
         }
 
-        this.Version = this.EntityManager.Version;
+        this.Version = this._targetEntities.Version;
     }
 
 
-    private readonly ResizableArray<IComponentArray> _entities;
-
+    private readonly ResizableArray<IComponentArray> _array;
+    private readonly EntityArrays _targetEntities;
 }
