@@ -21,7 +21,7 @@ public class OptimizedIterationGenerator :
     public record Info(string FileName, string Source);
 
 
-    protected override bool Choose(SyntaxNode node, CancellationToken token)
+    protected override bool Where(SyntaxNode node, CancellationToken token)
     {
         if (node is not AttributeSyntax attributeSyntax)
         {

@@ -13,7 +13,7 @@ public abstract class IncrementalGeneratorBase<T> : IIncrementalGenerator
     {
         var provider = context
             .SyntaxProvider
-            .CreateSyntaxProvider(this.Choose, this.Select)
+            .CreateSyntaxProvider(this.Where, this.Select)
             .Where(x => x is not null)
             .Collect();
 
@@ -21,7 +21,7 @@ public abstract class IncrementalGeneratorBase<T> : IIncrementalGenerator
     }
 
 
-    protected abstract bool Choose(SyntaxNode node, CancellationToken token);
+    protected abstract bool Where(SyntaxNode node, CancellationToken token);
     protected abstract T? Select(GeneratorSyntaxContext context, CancellationToken token);
 
 

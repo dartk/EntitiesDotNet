@@ -32,7 +32,7 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info>
     );
 
 
-    protected override bool Choose(SyntaxNode node, CancellationToken token)
+    protected override bool Where(SyntaxNode node, CancellationToken token)
     {
         if (node is not AttributeSyntax attribute)
         {
