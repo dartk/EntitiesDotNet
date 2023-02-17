@@ -8,14 +8,14 @@ namespace EntitiesDotNet.Generators;
 
 
 [Generator]
-public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info>
+public class EntityRefStructGenerator : IncrementalGeneratorBase<EntityRefStructGenerator.Info>
 {
 
-    private const string TemplateFileName = "Query.scriban";
+    private const string TemplateFileName = "EntityRefStruct.scriban";
 
 
-    private const string Query = nameof(Query);
-    private const string QueryAttribute = nameof(QueryAttribute);
+    private const string EntityRefStruct = nameof(EntityRefStruct);
+    private const string EntityRefStructAttribute = nameof(EntityRefStructAttribute);
 
 
     public record Info(
@@ -40,7 +40,7 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info>
         }
 
         return attribute.Name.ExtractName()
-            is QueryAttribute or Query;
+            is EntityRefStructAttribute or EntityRefStruct;
     }
 
 
@@ -138,7 +138,8 @@ public class QueryGenerator : IncrementalGeneratorBase<QueryGenerator.Info>
                 Name = item.TypeSymbol.Name,
                 Modifiers = item.StructDeclarationSyntax.Modifiers.ToFullString(),
                 ReadComponents = item.ReadComponents,
-                WriteComponents = item.WriteComponents
+                WriteComponents = item.WriteComponents,
+                IsPublic = item.TypeSymbol.DeclaredAccessibility == Accessibility.Public
             })
         });
         context.AddSource("Source.g.cs", sourceCode);

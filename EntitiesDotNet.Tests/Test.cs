@@ -30,8 +30,8 @@ public partial record struct Height
 }
 
 
-[Query]
-public ref partial struct Query
+[EntityRefStruct]
+public ref partial struct WidthAndHeight
 {
     public ref Height Height;
     public ref Width Width;
@@ -82,7 +82,7 @@ public class ComponentArrayTests
             height[i] = i * 3;
         }
 
-        this.Output.WriteLine(EntitiesDotNet.ComponentArrayExtensions.ToReadableString(array));
+        this.Output.WriteLine(array.ToReadableString());
 
         Assert.Equal(new Width[] { 0, 2, 4, 6, 8 },
             array.GetReadOnlySpan<Width>().ToArray());
@@ -95,12 +95,12 @@ public class ComponentArrayTests
     [Fact]
     public void FillArrayUsingQueryForEach()
     {
-        var array = new EntitiesDotNet.ComponentArray(Archetype<Width, Height>.Instance);
+        var array = new ComponentArray(Archetype<Width, Height>.Instance);
         array.Add(5);
         Assert.Equal(5, array.Count);
 
         var i = 0;
-        foreach (var item in Query.Select(array))
+        foreach (var item in array.Select(WidthAndHeight.Selector))
         {
             item.Width = i * 2;
             item.Height = i * 3;
@@ -124,7 +124,7 @@ public class ComponentArrayTests
         array.Add(5);
         Assert.Equal(5, array.Count);
 
-        var query = Query.Select(array);
+        var query = WidthAndHeight.Select(array);
         for (var i = 0; i < query.Length; ++i)
         {
             var item = query[i];

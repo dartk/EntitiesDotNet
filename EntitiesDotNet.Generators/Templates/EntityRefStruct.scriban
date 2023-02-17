@@ -80,10 +80,24 @@ namespace {{ type.namespace }} {
     end
     }}
     
-    {{- select_str = "Selector" + read_components_str + write_components_str }}
-    // {{ select_str }}
+    {{ type.is_public ? "public" : "internal" }} static class ComponentArrayExtensions_{{ type.name }}
+    {
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {{ type.name }}.Array Select(this IComponentArray array, {{ type.name }}.SelectorStruct selector) => new (array);
+    
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {{ type.name }}.ArrayList Select(this IReadOnlyList<IComponentArray> arrayList, {{ type.name }}.SelectorStruct selector) => new (arrayList);
+    
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {{ type.name }}.ArrayEnumerable Select(this IEnumerable<IComponentArray> arrayEnumerable, {{ type.name }}.SelectorStruct selector) => new (arrayEnumerable);
+    }
     
     {{ type.modifiers ~}} struct {{ type.name }} {
+        public static readonly SelectorStruct Selector = default;
+        public readonly struct SelectorStruct {}
     
         [Pure]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,6 +117,7 @@ namespace {{ type.namespace }} {
         public readonly ref struct Array {
     
             public Array(IComponentArray array) {
+                {{- select_str = "EntitiesDotNet.Selector" + read_components_str + write_components_str }}
                 (this.Length, {{ all_components | array_map @(do; ret ("this." + $0.name + "Span"); end) | array.join ", " }}) = array.Select({{ select_str }});
             }
             
@@ -244,11 +259,6 @@ namespace {{ type.namespace }} {
                 
             }
         }
-    }
-    
-    
-    public static partial class ParallelArrayCollectionSelectExtensions {
-        
     }
 }
 

@@ -2,6 +2,6 @@
 
 
 [AttributeUsage(AttributeTargets.Struct)]
-public class QueryAttribute : Attribute
+public class EntityRefStructAttribute : Attribute
 {
 }

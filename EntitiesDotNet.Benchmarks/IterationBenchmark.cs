@@ -19,7 +19,7 @@ public partial record struct Translation
 }
 
 
-[Query]
+[EntityRefStruct]
 internal ref partial struct UpdateTranslationQuery
 {
     public ref readonly Velocity Velocity;
@@ -27,7 +27,7 @@ internal ref partial struct UpdateTranslationQuery
 }
 
 
-[Query]
+[EntityRefStruct]
 internal ref partial struct ResetTranslationQuery
 {
     public ref Translation Translation;
@@ -62,7 +62,7 @@ public partial class IterationBenchmark
     // [Benchmark]
     public void QueryForeach()
     {
-        foreach (var item in ResetTranslationQuery.Select(this._array))
+        foreach (var item in this._array.Select(ResetTranslationQuery.Selector))
         {
             item.Translation = Vector3.Zero;
         }
@@ -82,7 +82,7 @@ public partial class IterationBenchmark
         var deltaTime = 1f / 60f;
 
         {
-            var array = ResetTranslationQuery.Select(this._array);
+            var array = this._array.Select(ResetTranslationQuery.Selector);
             var count = array.Length;
             for (var i = 0; i < count; ++i)
             {
