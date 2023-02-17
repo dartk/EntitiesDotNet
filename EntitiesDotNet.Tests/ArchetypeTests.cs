@@ -26,9 +26,9 @@ public class ArchetypeTests
     [Fact]
     public void InstanceMethodTest()
     {
-        var xyz0 = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
-        var xyz1 = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
-        var xy = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y));
+        var xyz0 = Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
+        var xyz1 = Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
+        var xy = Archetype.Instance(typeof(X), typeof(Y));
 
         Assert.StrictEqual(xyz0, xyz1);
         Assert.NotStrictEqual(xyz0, xy);
@@ -38,9 +38,9 @@ public class ArchetypeTests
     [Fact]
     public void ComponentsPropertyTest()
     {
-        var x = EntitiesDotNet.Archetype.Instance(typeof(X));
-        var xy = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y));
-        var xyz = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
+        var x = Archetype.Instance(typeof(X));
+        var xy = Archetype.Instance(typeof(X), typeof(Y));
+        var xyz = Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
 
         Assert.Equal(
             new ComponentType[] { typeof(EntityId), typeof(X) },
@@ -64,7 +64,7 @@ public class ArchetypeTests
     [Fact]
     public void ContainsMethodTest()
     {
-        var xy = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y));
+        var xy = Archetype.Instance(typeof(X), typeof(Y));
         Assert.True(xy.Contains(typeof(X)));
         Assert.True(xy.Contains(typeof(Y)));
         Assert.False(xy.Contains(typeof(Z)));
@@ -74,9 +74,9 @@ public class ArchetypeTests
     [Fact]
     public void AddComponentsTest()
     {
-        var x = EntitiesDotNet.Archetype.Instance(typeof(X));
-        var xy = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y));
-        var xyz = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
+        var x = Archetype.Instance(typeof(X));
+        var xy = Archetype.Instance(typeof(X), typeof(Y));
+        var xyz = Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
 
         Assert.StrictEqual(xy, x.With(typeof(Y)));
         Assert.StrictEqual(xy, x.With(typeof(Y)));
@@ -87,10 +87,10 @@ public class ArchetypeTests
     [Fact]
     public void RemoveComponentsTest()
     {
-        var x = EntitiesDotNet.Archetype.Instance(typeof(X));
-        var xy = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y));
-        var yz = EntitiesDotNet.Archetype.Instance(typeof(Y), typeof(Z));
-        var xyz = EntitiesDotNet.Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
+        var x = Archetype.Instance(typeof(X));
+        var xy = Archetype.Instance(typeof(X), typeof(Y));
+        var yz = Archetype.Instance(typeof(Y), typeof(Z));
+        var xyz = Archetype.Instance(typeof(X), typeof(Y), typeof(Z));
 
         Assert.StrictEqual(x, x.Without(typeof(Y), typeof(Z)));
         Assert.StrictEqual(x, xy.Without(typeof(Y)));
@@ -103,14 +103,14 @@ public class ArchetypeTests
     [Fact]
     public void SharedComponentTests()
     {
-        var xy = EntitiesDotNet.Archetype.Instance<X, Y>();
-        var xyWithSharedX10 = EntitiesDotNet.Archetype.Instance<X, Y>()
+        var xy = Archetype.Instance<X, Y>();
+        var xyWithSharedX10 = Archetype.Instance<X, Y>()
             .With(SharedComponent.Instance(new SharedX(10)));
-        var xyWithSharedX20 = EntitiesDotNet.Archetype.Instance<X, Y>()
+        var xyWithSharedX20 = Archetype.Instance<X, Y>()
             .With(SharedComponent.Instance(new SharedX(20)));
-        var xyWithSharedX10_2 = EntitiesDotNet.Archetype.Instance<X, Y>()
+        var xyWithSharedX10_2 = Archetype.Instance<X, Y>()
             .WithShared(new SharedX(10), new SharedX(10));
-        var xyWithSharedX10_X11 = EntitiesDotNet.Archetype.Instance<X, Y>()
+        var xyWithSharedX10_X11 = Archetype.Instance<X, Y>()
             .WithShared(new SharedX(10), new SharedX(11));
 
         Assert.NotStrictEqual(xy, xyWithSharedX10);

@@ -118,7 +118,7 @@ public partial class IterationBenchmark
             var deltaTime = 1f / 60f;
 
             var (count, velocity, translation) =
-                this._array.Read<Velocity>().Write<Translation>();
+                this._array.Select(Selector.Read<Velocity>().Write<Translation>());
 
             for (var i = 0; i < count; ++i)
             {

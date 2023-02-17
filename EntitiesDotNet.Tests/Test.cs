@@ -69,10 +69,10 @@ public class ComponentArrayTests
     [Fact]
     public void FillArrayUsingReadWrite()
     {
-        var array = EntitiesDotNet.ComponentArray.Create<Width, Height>();
+        var array = ComponentArray.Create<Width, Height>();
         array.Add(5);
 
-        var (count, width, height) = array.Write<Width, Height>();
+        var (count, width, height) = array.Select(Selector.Write<Width, Height>());
 
         Assert.Equal(5, count);
 

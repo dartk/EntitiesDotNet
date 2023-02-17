@@ -80,7 +80,7 @@ namespace {{ type.namespace }} {
     end
     }}
     
-    {{- select_str = read_components_str + write_components_str }}
+    {{- select_str = "Selector" + read_components_str + write_components_str }}
     // {{ select_str }}
     
     {{ type.modifiers ~}} struct {{ type.name }} {
@@ -103,7 +103,7 @@ namespace {{ type.namespace }} {
         public readonly ref struct Array {
     
             public Array(IComponentArray array) {
-                (this.Length, {{ all_components | array_map @(do; ret ("this." + $0.name + "Span"); end) | array.join ", " }}) = array{{ select_str }};
+                (this.Length, {{ all_components | array_map @(do; ret ("this." + $0.name + "Span"); end) | array.join ", " }}) = array.Select({{ select_str }});
             }
             
             
