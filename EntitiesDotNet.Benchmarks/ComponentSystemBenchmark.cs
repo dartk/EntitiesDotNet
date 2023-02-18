@@ -25,8 +25,7 @@ public partial class ComponentSystemBenchmark
         }
 
         var random = new Random(0);
-        var (count, translations, velocities) =
-            array.Select(Selector.Write<Translation, Velocity>());
+        var (count, translations, velocities) = Write<Translation, Velocity>.From(array);
         for (var i = 0; i < count; ++i)
         {
             translations[i].Vector = new Vector3(random.NextSingle());
@@ -43,8 +42,7 @@ public partial class ComponentSystemBenchmark
         var deltaTime = 1f / 60f;
         foreach (var array in this._entityManager.Entities)
         {
-            var (count, velocities, translations) =
-                array.Select(Selector.Read<Velocity>().Write<Translation>());
+            var (count, velocities, translations) = Read<Velocity>.Write<Translation>.From(array);
             for (var i = 0; i < count; ++i)
             {
                 ref var translation = ref translations[i];

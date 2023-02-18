@@ -3,12 +3,13 @@
 {{- namespace = "Selectors" -}}
 {{- type_name = "Selector" -}}
 
+using System.Collections;
 using System.Diagnostics.Contracts;
 using {{ root_namespace }}.ComponentArrayGenerics;
 
 
 namespace {{ root_namespace }} {
-    {{- method_name = "Array" }}
+    {{- method_name = "From" }}
 
     {{- for count in 1..type_parameters_count
         type_parameters_str_value = type_parameters_str count }}
@@ -20,6 +21,9 @@ namespace {{ root_namespace }} {
                 
         [Pure] public static ComponentArray_{{ rw_suffix count count }}<{{ type_parameters_str_value }}>
             {{ method_name }}(IComponentArray array) => new (array);
+            
+        [Pure] public static EntityArrays_{{ rw_suffix count count }}<{{ type_parameters_str_value }}>
+            {{ method_name }}(EntityArrays array) => new (array);
 
         {{- if count < type_parameters_count
             for extra_count in (count + 1)..type_parameters_count
@@ -29,6 +33,9 @@ namespace {{ root_namespace }} {
         {
             [Pure] public static ComponentArray_{{ rw_suffix extra_count read_count }}<{{ type_parameters_str extra_count }}>
                 {{ method_name }}(IComponentArray array) => new (array);
+                
+            [Pure] public static EntityArrays_{{ rw_suffix extra_count read_count }}<{{ type_parameters_str extra_count }}>
+                {{ method_name }}(EntityArrays array) => new (array);
         }
             
             {{- end }}
@@ -39,6 +46,9 @@ namespace {{ root_namespace }} {
     {
         [Pure] public static ComponentArray_{{ rw_suffix count 0 }}<{{ type_parameters_str_value }}>
             {{ method_name }}(IComponentArray array) => new (array);
+            
+        [Pure] public static EntityArrays_{{ rw_suffix count 0 }}<{{ type_parameters_str_value }}>
+            {{ method_name }}(EntityArrays array) => new (array);
     }
     {{- end }}
     
@@ -172,6 +182,70 @@ namespace {{ root_namespace }}.ComponentArrayGenerics {
                 span{{ $i }} = default;
                 {{- end }}
             }
+        }
+    }
+    
+    {{- entity_arrays_name = "EntityArrays_" + (rw_suffix count read_count) }}
+    {{- component_array_name = struct_name + "<" + type_parameters_str_value + ">" }}
+    
+    public readonly struct {{ entity_arrays_name }}<{{ type_parameters_str_value }}>
+        : IReadOnlyList<{{ component_array_name }}>
+    {
+        public {{ entity_arrays_name }}(EntityArrays entities)
+        {
+            this.Entities = entities;
+        }
+
+
+        public EntityArrays Entities { get; }
+
+
+        public int Count => this.Entities.Count;
+
+
+        public {{ component_array_name }} this[int index] =>
+            new(this.Entities[index]);
+
+
+        public Enumerator GetEnumerator() => new(this.Entities);
+
+
+        IEnumerator<{{ component_array_name }}> IEnumerable<{{ component_array_name }}>.GetEnumerator() => this.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+
+        public struct Enumerator : IEnumerator<{{ component_array_name }}>
+        {
+            public Enumerator(EntityArrays entities)
+            {
+                this.Entities = entities;
+                this._currentIndex = -1;
+            }
+
+
+            public EntityArrays Entities { get; }
+            private int _currentIndex = -1;
+
+
+            public bool MoveNext()
+            {
+                return ++this._currentIndex < this.Entities.Count;
+            }
+
+
+            public void Reset()
+            {
+                this._currentIndex = -1;
+            }
+
+
+            public {{ component_array_name }} Current => new(this.Entities[this._currentIndex]);
+
+
+            object IEnumerator.Current => this.Current;
+
+
+            void IDisposable.Dispose() { }
         }
     }
         

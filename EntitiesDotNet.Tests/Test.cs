@@ -72,7 +72,7 @@ public class ComponentArrayTests
         var array = ComponentArray.Create<Width, Height>();
         array.Add(5);
 
-        var (count, width, height) = Write<Width, Height>.Array(array);
+        var (count, width, height) = Write<Width, Height>.From(array);
 
         Assert.Equal(5, count);
 
