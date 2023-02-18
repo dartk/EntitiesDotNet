@@ -100,7 +100,7 @@ public class ComponentArrayTests
         Assert.Equal(5, array.Count);
 
         var i = 0;
-        foreach (var item in array.Select(WidthAndHeight.Selector))
+        foreach (var item in WidthAndHeight.From(array))
         {
             item.Width = i * 2;
             item.Height = i * 3;
@@ -124,10 +124,10 @@ public class ComponentArrayTests
         array.Add(5);
         Assert.Equal(5, array.Count);
 
-        var query = WidthAndHeight.Select(array);
-        for (var i = 0; i < query.Length; ++i)
+        var items = WidthAndHeight.From(array);
+        for (var i = 0; i < items.Length; ++i)
         {
-            var item = query[i];
+            var item = items[i];
             item.Width = i * 2;
             item.Height = i * 3;
         }
