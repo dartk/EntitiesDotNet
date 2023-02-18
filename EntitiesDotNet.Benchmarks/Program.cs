@@ -2,4 +2,5 @@
 using EntitiesDotNet.Benchmarks;
 
 
-BenchmarkRunner.Run(typeof(ComponentSystemBenchmark));
+BenchmarkRunner.Run(typeof(CalculateWorldTransformBenchmark));
+// BenchmarkRunner.Run(typeof(ComponentSystemBenchmark));
