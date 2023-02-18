@@ -41,24 +41,27 @@ public class ComponentSystemsTests
         entityManager.CreateEntity(EntitiesDotNet.Archetype.Instance<int>().WithShared(false));
         entityManager.CreateEntity(EntitiesDotNet.Archetype.Instance<int>().WithShared(true));
 
-        var system = new TestSystem(entityManager.Entities, this.Output);
+        var system = new TestSystem(entityManager.Entities);
         system.Execute();
     }
 }
 
 
-public partial record AnotherSystem(EntityArrays Entities)
-    : ComponentSystem(Entities)
+public partial class AnotherSystem : ComponentSystem
 {
     protected override void OnExecute()
     {
         throw new NotImplementedException();
     }
+
+
+    public AnotherSystem(EntityArrays entities) : base(entities)
+    {
+    }
 }
 
 
-public partial record TestSystem(EntityArrays Entities, ITestOutputHelper Output)
-    : ComponentSystem(Entities)
+public partial class TestSystem : ComponentSystem
 {
     [GenerateOnExecute]
     protected override void OnExecute()
@@ -77,5 +80,10 @@ public partial record TestSystem(EntityArrays Entities, ITestOutputHelper Output
         this.Entities
             .Where(x => x.Archetype.Contains(SharedComponent.Instance(true)))
             .ForEach((ref int i) => i = 1);
+    }
+
+
+    public TestSystem(EntityArrays entities) : base(entities)
+    {
     }
 }

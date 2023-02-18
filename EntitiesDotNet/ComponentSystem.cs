@@ -1,7 +1,7 @@
 ﻿namespace EntitiesDotNet;
 
 
-public abstract record ComponentSystem
+public abstract class ComponentSystem
 {
     public ComponentSystem(EntityArrays entities)
     {

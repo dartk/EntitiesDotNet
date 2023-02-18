@@ -53,7 +53,7 @@ public class ComponentSystemGenerator :
         }
 
         var classDeclarationSyntax = methodDeclarationSyntax.Ancestors()
-            .OfType<RecordDeclarationSyntax>().First();
+            .OfType<ClassDeclarationSyntax>().First();
 
         var source = GenerateSourceFile(classDeclarationSyntax, () =>
             GenerateComponentSystemClass(
@@ -145,7 +145,7 @@ public class ComponentSystemGenerator :
 
 
     private static string GenerateComponentSystemClass(
-        RecordDeclarationSyntax classDeclarationSyntax,
+        ClassDeclarationSyntax classDeclarationSyntax,
         MethodDeclarationSyntax methodSyntax
     )
     {

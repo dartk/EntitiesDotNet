@@ -73,8 +73,7 @@ public partial class ComponentSystemBenchmark
     private EntityManager _entityManager;
 
 
-    private partial record BenchmarkSystem(EntityArrays Entities)
-        : ComponentSystem(Entities)
+    private partial class BenchmarkSystem : ComponentSystem
     {
         [GenerateOnExecute]
         protected override void OnExecute()
@@ -84,6 +83,11 @@ public partial class ComponentSystemBenchmark
             {
                 translation += deltaTime * velocity.Vector;
             });
+        }
+
+
+        public BenchmarkSystem(EntityArrays entities) : base(entities)
+        {
         }
     }
 }
