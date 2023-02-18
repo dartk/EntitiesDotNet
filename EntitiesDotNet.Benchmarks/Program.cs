@@ -2,5 +2,11 @@
 using EntitiesDotNet.Benchmarks;
 
 
-BenchmarkRunner.Run(typeof(CalculateWorldTransformBenchmark));
-// BenchmarkRunner.Run(typeof(ComponentSystemBenchmark));
+// var benchmark = new CalculateFloatTranslationBenchmark()
+// {
+//     N = 10
+// };
+// benchmark.GlobalSetup();
+// benchmark.ReadWriteNative();
+
+BenchmarkRunner.Run(typeof(TranslationBenchmark));
