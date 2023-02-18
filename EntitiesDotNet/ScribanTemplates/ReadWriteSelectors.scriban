@@ -4,7 +4,45 @@
 {{- type_name = "Selector" -}}
 
 using System.Diagnostics.Contracts;
-using {{ root_namespace }}.{{ namespace }};
+using {{ root_namespace }}.ComponentArrayGenerics;
+
+
+namespace {{ root_namespace }} {
+    {{- method_name = "Array" }}
+
+    {{- for count in 1..type_parameters_count
+        type_parameters_str_value = type_parameters_str count }}
+
+    public static class Read<{{ type_parameters_str_value }}>
+    {
+        {{- last_index = count - 1 }}
+        {{- read_count = count }}
+                
+        [Pure] public static ComponentArray_{{ rw_suffix count count }}<{{ type_parameters_str_value }}>
+            {{ method_name }}(IComponentArray array) => new (array);
+
+        {{- if count < type_parameters_count
+            for extra_count in (count + 1)..type_parameters_count
+                extra_write_count = read_count + extra_count }}
+                
+        public static class Write<{{ type_parameters_str_offset (extra_count - count) count }}>
+        {
+            [Pure] public static ComponentArray_{{ rw_suffix extra_count read_count }}<{{ type_parameters_str extra_count }}>
+                {{ method_name }}(IComponentArray array) => new (array);
+        }
+            
+            {{- end }}
+        {{- end }}
+    }
+        
+    public static class Write<{{ type_parameters_str_value }}>
+    {
+        [Pure] public static ComponentArray_{{ rw_suffix count 0 }}<{{ type_parameters_str_value }}>
+            {{ method_name }}(IComponentArray array) => new (array);
+    }
+    {{- end }}
+    
+}
 
 
 namespace {{ root_namespace }} {
@@ -37,7 +75,7 @@ namespace {{ root_namespace }} {
 }
 
 
-namespace {{ root_namespace }}.{{ namespace }} {
+namespace {{ root_namespace }}.ComponentArrayGenerics {
 
     {{-
     func AssignSpanVariables (count, readCount)
