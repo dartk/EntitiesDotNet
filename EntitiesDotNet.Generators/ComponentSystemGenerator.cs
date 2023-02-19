@@ -17,10 +17,7 @@ public class ComponentSystemGenerator :
 {
 
     private const string GenerateOnExecute = nameof(GenerateOnExecute);
-
-
-    private const string GenerateOnExecuteAttribute =
-        nameof(EntitiesDotNet.GenerateOnExecute);
+    private const string GenerateOnExecuteAttribute = nameof(GenerateOnExecuteAttribute);
 
 
     public record Info(string FileName, string Source);

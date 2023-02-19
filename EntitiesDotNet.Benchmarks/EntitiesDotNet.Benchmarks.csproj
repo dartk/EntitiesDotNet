@@ -24,6 +24,10 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
+    
+    <ItemGroup>
+        <Compile Include="..\EntitiesDotNet.Generators\Runtime\EntitiesDotNet.cs"/>
+    </ItemGroup>
 
     <PropertyGroup>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
