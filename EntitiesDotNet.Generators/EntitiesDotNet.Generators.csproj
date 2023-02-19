@@ -8,14 +8,17 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Title>EntityComponentSystem.Generators</Title>
-        <Description>Generators for Entity Component System</Description>
+        <PackageId>Dartk.EntitiesDotNet.Generators</PackageId>
+        <Title>EntitiesDotNet.Generators</Title>
+        <Description>Generators for EntitiesDotNet</Description>
         <Authors>Dmitry Artemkin</Authors>
         <Copyright>2023</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <RepositoryUrl>https://github.com/dartk/EntityComponentSystem</RepositoryUrl>
-        <PackageProjectUrl>https://github.com/dartk/EntityComponentSystem</PackageProjectUrl>
-        <PackageVersion>0.0.3</PackageVersion>
+        <PackageProjectUrl>https://github.com/dartk/EntitiesDotNet</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/dartk/EntitiesDotNet</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>C# ecs entity-component-system performance</PackageTags>
+        <PackageVersion>0.1.0-alpha3</PackageVersion>
     </PropertyGroup>
 
     <PropertyGroup>

@@ -8,15 +8,23 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Title>EntityComponentSystem</Title>
-        <Description>Entity Component System</Description>
+        <PackageId>Dartk.EntitiesDotNet</PackageId>
+        <Title>EntitiesDotNet</Title>
+        <Description>Fast Entity Component System library for .NET</Description>
         <Authors>Dmitry Artemkin</Authors>
         <Copyright>2023</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <RepositoryUrl>https://github.com/dartk/EntityComponentSystem</RepositoryUrl>
-        <PackageProjectUrl>https://github.com/dartk/EntityComponentSystem</PackageProjectUrl>
-        <PackageVersion>0.0.3</PackageVersion>
+        <PackageProjectUrl>https://github.com/dartk/EntitiesDotNet</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/dartk/EntitiesDotNet</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>C# ecs entity-component-system performance</PackageTags>
+        <PackageVersion>0.1.0-alpha3</PackageVersion>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="./../README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="System.Memory" Version="4.5.5" />
