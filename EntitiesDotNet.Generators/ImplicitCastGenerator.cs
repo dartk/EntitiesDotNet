@@ -1,106 +1,87 @@
-﻿using System.Collections.Immutable;
+﻿using CSharp.SourceGen.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Scriban;
+
+
+// ReSharper disable NotAccessedPositionalProperty.Local
 
 
 namespace EntitiesDotNet.Generators;
 
 
 [Generator]
-public class ImplicitCastGenerator
-    : IncrementalGeneratorBase<ImplicitCastGenerator.Info>
+public class ImplicitCastGenerator : IIncrementalGenerator
 {
-    private const string TemplateFileName = "ImplicitCast.scriban";
-
-
     private const string GenerateImplicitOperators = nameof(GenerateImplicitOperators);
 
 
-    private const string GenerateImplicitOperatorsAttribute =
-        nameof(GenerateImplicitOperatorsAttribute);
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var provider = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) => node.IsAttribute(GenerateImplicitOperators),
+            transform: static (context, _) =>
+            {
+                if (!context.TryGetAttributeAppliedType(out var structSyntax, out var structSymbol))
+                {
+                    return null;
+                }
+
+                var fieldSymbols = structSymbol
+                    .GetMembers()
+                    .Where(x => x is IFieldSymbol && !x.IsImplicitlyDeclared)
+                    .Cast<IFieldSymbol>()
+                    .ToList();
+
+                if (fieldSymbols.Count != 1)
+                {
+                    return null;
+                }
+
+                var structType = structSymbol.Name;
+
+                var fieldSymbol = fieldSymbols.First();
+                var fieldName = fieldSymbol.Name;
+                var fieldType = fieldSymbol.Type.ToDisplayString();
+
+                var operators = $$"""
+                    public static implicit operator {{fieldType}}({{structType}} value) =>
+                        value.{{fieldName}};
+                    public static implicit operator {{structType}}({{fieldType}} value) {
+                        var result = default({{structType}});
+                        result.{{fieldName}} = value;
+                        return result;
+                    }
+                    """;
+
+                var source = QualifiedDeclarationInfo.FromSyntax(structSyntax).ToString(operators);
+                return new Info(structSymbol.SuggestedFileName(), source);
+            }).Collect();
+
+        context.RegisterSourceOutput(provider, static (context, items) =>
+        {
+            foreach (var item in items)
+            {
+                if (item == null) continue;
+                context.AddSource(item.FileName, item.Source);
+            }
+        });
+    }
 
 
-    public record Info(
-        string Namespace,
-        string Name,
-        string Declaration,
-        string FieldName,
-        string FieldType
+    private record Info(
+        string FileName,
+        string Source
     );
 
 
-    protected override bool Where(SyntaxNode node, CancellationToken token)
-    {
-        if (node is not AttributeSyntax attribute)
-        {
-            return false;
-        }
+    private const string ScribanTemplate = """
 
-        return attribute.Name.ExtractName()
-            is GenerateImplicitOperatorsAttribute or GenerateImplicitOperators;
+{{ type.declaration }} {
+    public static implicit operator {{ type.field_type }}({{ type.name }} value) => value.{{ type.field_name }};
+    public static implicit operator {{ type.name }}({{ type.field_type }} value) {
+        var result = default({{ type.name }});
+        result.{{ type.field_name }} = value;
+        return result;
     }
-
-
-    protected override Info? Select(
-        GeneratorSyntaxContext context,
-        CancellationToken token
-    )
-    {
-        var semanticModel = context.SemanticModel;
-        var attribute = (AttributeSyntax)context.Node;
-        var structSyntax = attribute.Parent?.Parent;
-
-        if (
-            structSyntax == null
-            || semanticModel.GetDeclaredSymbol(structSyntax)
-                is not INamedTypeSymbol structSymbol
-        )
-        {
-            return null;
-        }
-
-        var fieldSymbols = structSymbol
-            .GetMembers()
-            .Where(x => x is IFieldSymbol && !x.IsImplicitlyDeclared)
-            .Cast<IFieldSymbol>()
-            .ToList();
-
-        if (fieldSymbols.Count != 1)
-        {
-            return null;
-        }
-
-        var fieldSymbol = fieldSymbols.First();
-
-        var structDeclarationSyntax = (TypeDeclarationSyntax)structSymbol.DeclaringSyntaxReferences
-            .First()
-            .GetSyntax();
-
-        var typeDeclaration =
-            structDeclarationSyntax.Modifiers.ToFullString()
-            + (structDeclarationSyntax is RecordDeclarationSyntax ? "record struct " : "struct ")
-            + structDeclarationSyntax.Identifier;
-
-        return new Info(
-            structSymbol.ContainingNamespace.ToDisplayString(),
-            structSymbol.Name,
-            typeDeclaration,
-            fieldSymbol.Name,
-            fieldSymbol.Type.ToDisplayString()
-        );
-    }
-
-
-    protected override void Produce(
-        SourceProductionContext context,
-        ImmutableArray<Info> items
-    )
-    {
-        var templateContent = GetTemplate(TemplateFileName);
-        var template = Template.Parse(templateContent, TemplateFileName);
-
-        var sourceCode = template.Render(new { Types = items });
-        context.AddSource("Source.g.cs", sourceCode);
-    }
+}
+""";
 }
