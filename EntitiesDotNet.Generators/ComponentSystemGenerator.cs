@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Text;
+﻿using System.Text;
 using System.Xml.Serialization;
 using CSharp.SourceGen.Extensions;
 using Microsoft.CodeAnalysis;
@@ -13,121 +12,56 @@ namespace EntitiesDotNet.Generators;
 
 
 [Generator]
-public class ComponentSystemGenerator :
-    IncrementalGeneratorBase<ComponentSystemGenerator.Info>
+public class ComponentSystemGenerator : IIncrementalGenerator
 {
-
     private const string GenerateOnExecute = nameof(GenerateOnExecute);
-    private const string GenerateOnExecuteAttribute = nameof(GenerateOnExecuteAttribute);
+
+
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var provider = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) => node.IsAttribute(GenerateOnExecute),
+            transform: static (context, _) =>
+            {
+                var attribute = (AttributeSyntax)context.Node;
+
+                var methodDeclarationSyntax = (MethodDeclarationSyntax?)attribute.Parent?.Parent;
+                if (methodDeclarationSyntax == null)
+                {
+                    throw new UnreachableException(
+                        $"{nameof(MethodDeclarationSyntax)} is not found.");
+                }
+
+                var classDeclarationSyntax = methodDeclarationSyntax.Ancestors()
+                    .OfType<ClassDeclarationSyntax>().First();
+
+                var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax);
+                if (classSymbol == null)
+                {
+                    throw new UnreachableException("Class symbol was not found.");
+                }
+
+                var declaration = QualifiedDeclarationInfo.FromSyntax(classDeclarationSyntax);
+                var source = declaration.ToString(
+                    withConstraints: $": {nameof(IComponentSystem_Generated)}",
+                    withMembers: GenerateOnExecuteMethod(methodDeclarationSyntax));
+
+                return new Info(
+                    classSymbol.SuggestedFileName(".OnExecute"),
+                    source);
+            }).Collect();
+
+        context.RegisterSourceOutput(provider, static (context, items) =>
+        {
+            foreach (var item in items)
+            {
+                context.AddSource(item.FileName, item.Source);
+            }
+        });
+    }
 
 
     public record Info(string FileName, string Source);
-
-
-    protected override bool Where(SyntaxNode node, CancellationToken token)
-    {
-        if (node is not AttributeSyntax attributeSyntax)
-        {
-            return false;
-        }
-
-        return attributeSyntax.Name.ExtractName()
-            is GenerateOnExecute or GenerateOnExecuteAttribute;
-    }
-
-
-    protected override Info? Select(
-        GeneratorSyntaxContext context,
-        CancellationToken token
-    )
-    {
-        var attribute = (AttributeSyntax)context.Node;
-
-        var methodDeclarationSyntax = (MethodDeclarationSyntax?)attribute.Parent?.Parent;
-        if (methodDeclarationSyntax == null)
-        {
-            throw new UnreachableException(
-                $"{nameof(MethodDeclarationSyntax)} is not found.");
-        }
-
-        var classDeclarationSyntax = methodDeclarationSyntax.Ancestors()
-            .OfType<ClassDeclarationSyntax>().First();
-
-        var source = GenerateSourceFile(classDeclarationSyntax, () =>
-            GenerateComponentSystemClass(
-                classDeclarationSyntax,
-                methodDeclarationSyntax));
-
-        return new Info(
-            $"{classDeclarationSyntax.Identifier}.{methodDeclarationSyntax.Identifier}_{this._sourceFileCounter++}.g.cs",
-            source);
-    }
-
-
-    protected override void Produce(
-        SourceProductionContext context,
-        ImmutableArray<Info> items
-    )
-    {
-        foreach (var item in items)
-        {
-            context.AddSource(item.FileName, item.Source);
-        }
-    }
-
-
-    private static string GenerateSourceFile(SyntaxNode node, Func<string> getContent)
-    {
-        var source = new StringBuilder();
-
-        source.AppendLine(getContent());
-
-        var ancestors = node.Ancestors();
-        foreach (var ancestor in ancestors)
-        {
-            if (TypeDeclarationSyntaxUtil.ToString(ancestor) is { } str)
-            {
-                source.Insert(0,
-                    Environment.NewLine
-                    + str + " {"
-                    + Environment.NewLine);
-
-                source.AppendLine("}" + Environment.NewLine);
-            }
-
-            var usingList = ancestor.ChildNodes()
-                .Where(x => x is UsingDirectiveSyntax or UsingStatementSyntax);
-
-            foreach (var item in usingList)
-            {
-                source.Insert(0, item + Environment.NewLine);
-            }
-
-            {
-                if (ancestor is NamespaceDeclarationSyntax @namespace)
-                {
-                    source.Insert(0,
-                        Environment.NewLine
-                        + $"namespace {@namespace.Name} {{"
-                        + Environment.NewLine);
-
-                    source.AppendLine("}" + Environment.NewLine);
-                }
-            }
-
-            {
-                if (ancestor is FileScopedNamespaceDeclarationSyntax @namespace)
-                {
-                    source.Insert(0,
-                        Environment.NewLine
-                        + $"namespace {@namespace.Name};"
-                        + Environment.NewLine);
-                }
-            }
-        }
-
-        return source.ToString();
-    }
 
 
     private static IdentifierNameSyntax GetInvokedMethodName(
@@ -142,17 +76,11 @@ public class ComponentSystemGenerator :
     }
 
 
-    private static string GenerateComponentSystemClass(
-        ClassDeclarationSyntax classDeclarationSyntax,
+    private static string GenerateOnExecuteMethod(
         MethodDeclarationSyntax methodSyntax
     )
     {
         var source = new StringBuilder();
-
-        source.AppendLine(
-            $"{TypeDeclarationSyntaxUtil.ToString(classDeclarationSyntax)} : {nameof(IComponentSystem_Generated)}");
-        source.AppendLine("{");
-
 
         var methodBlock = methodSyntax.ChildNodes().OfType<BlockSyntax>().First();
 
@@ -187,7 +115,7 @@ public class ComponentSystemGenerator :
         source.AppendLine(@"void IComponentSystem_Generated.OnExecute()");
 
         var sourceText = methodBlock.SyntaxTree.GetText();
-        
+
         var lastPosition = methodBlock.SpanStart;
         for (var i = 0; i < forEachInvocations.Count; ++i)
         {
@@ -198,7 +126,7 @@ public class ComponentSystemGenerator :
 
             var sourceTextBeforeForEach =
                 sourceText.ToString(TextSpan.FromBounds(lastPosition, statement.SpanStart));
-            
+
             source.AppendLine(sourceTextBeforeForEach);
             source.AppendLine(GenerateOptimizedForEach(foreachInfos[i], filters[i], CacheName(i)));
 
@@ -207,8 +135,6 @@ public class ComponentSystemGenerator :
 
         source.AppendLine(
             sourceText.ToString(TextSpan.FromBounds(lastPosition, methodBlock.Span.End)));
-        
-        source.AppendLine("}");
 
         return source.ToString();
     }
@@ -225,7 +151,8 @@ public class ComponentSystemGenerator :
         var componentTypesStr =
             string.Join(", ", info.Components.Select(x => x.Type));
 
-        var predicateList = new List<string> {
+        var predicateList = new List<string>
+        {
             $"array => array.Archetype.Contains<{componentTypesStr}>()"
         };
 
@@ -276,7 +203,8 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
         var componentTypesStr =
             string.Join(", ", foreachInfo.Components.Select(x => x.Type));
 
-        var predicateList = new List<string> {
+        var predicateList = new List<string>
+        {
             $"array => array.Archetype.Contains<{componentTypesStr}>()"
         };
 
@@ -313,7 +241,6 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
         int LineStart
     )
     {
-
         public IEnumerable<ForEachArgInfo> ReadComponents =>
             this.Components.Where(x => x.IsReadOnly);
 
@@ -402,7 +329,6 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
 
     private record WhereLambdaInfo(string ParameterName, string Body, string Lambda)
     {
-
         /// <summary>
         /// Extracts info from IEnumerable.Where(x => ...) invocation.
         /// </summary>
@@ -526,9 +452,5 @@ this.{{cacheName}} = new {{nameof(EntityQueryCache)}}(
                 .Build();
             return serializer.Serialize(this);
         }
-
     }
-
-
-    private int _sourceFileCounter;
 }
