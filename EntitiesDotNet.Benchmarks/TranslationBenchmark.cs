@@ -88,11 +88,19 @@ public class TranslationBenchmark
     }
 
 
-    // [Benchmark]
+    [Benchmark]
     public void EntityRef()
     {
         this._entityRefSystem.DeltaTime = DeltaTime;
         this._entityRefSystem.Execute();
+    }
+
+
+    [Benchmark]
+    public void EntityRef_ForEach()
+    {
+        this._entityRefSystem.DeltaTime = DeltaTime;
+        this._entityRefSystem.OnExecuteForEach();
     }
 
 
@@ -197,6 +205,13 @@ public partial class EntityRefSystem : ComponentSystem
         // {
         //     UpdateTranslation(entity.Velocity, ref entity.Translation, this.DeltaTime);
         // }
+    }
+
+
+    public void OnExecuteForEach()
+    {
+        UpdateVelocityEntity.ForEach(this.Entities,
+            static entity => UpdateVelocity(entity.Acceleration, ref entity.Velocity, 1f / 30f));
     }
 
 
