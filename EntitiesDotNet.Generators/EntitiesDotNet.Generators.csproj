@@ -27,11 +27,11 @@
 
     <ItemGroup>
         <Compile Remove="Runtime/*.cs" />
-        <None Include="Runtime/*.cs" PackagePath="ContentFiles/cs/any/" Pack="true" />
+        <None Include="RuntimeAttributes/*.cs" PackagePath="ContentFiles/cs/any/EntitiesDotNet" Pack="true" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dartk.CSharp.SourceGen.Extensions" Version="0.1.0-alpha13" />
+        <PackageReference Include="Dartk.CSharp.SourceGen.Extensions" Version="0.1.0-alpha14" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" PrivateAssets="all" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.2" GeneratePathProperty="true" PrivateAssets="all" />
         <PackageReference Include="Scriban" Version="5.5.0" GeneratePathProperty="true" PrivateAssets="all" />

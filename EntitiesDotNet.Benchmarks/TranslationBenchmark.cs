@@ -163,16 +163,32 @@ public class TranslationBenchmark
 }
 
 
-public class EntityRefSystem : ComponentSystem
+public partial class EntityRefSystem : ComponentSystem
 {
     public EntityRefSystem(EntityArrays entities) : base(entities)
     {
     }
 
 
+    [EntityRefStruct]
+    private ref partial struct UpdateTranslationEntity
+    {
+        public ref readonly Velocity Velocity;
+        public ref Translation Translation;
+    }
+
+
+    [EntityRefStruct]
+    private ref partial struct UpdateVelocityEntity
+    {
+        public ref readonly Acceleration Acceleration;
+        public ref Velocity Velocity;
+    }
+
+
     protected override void OnExecute()
     {
-        foreach (var entity in AccelerationAndVelocity.From(this.Entities))
+        foreach (var entity in UpdateVelocityEntity.From(this.Entities))
         {
             UpdateVelocity(entity.Acceleration, ref entity.Velocity, this.DeltaTime);
         }
@@ -259,7 +275,7 @@ public class ReadWriteUnsafeSystem : ComponentSystem
             {
                 var accelerationPtr2 = (float3*)accelerationPtr;
                 var velocityPtr2 = (float3*)velocityPtr;
-                
+
                 for (var i = 0; i < count; ++i)
                 {
                     UpdateVelocity(*accelerationPtr2++, ref *velocityPtr2++, this.DeltaTime);
@@ -358,8 +374,8 @@ public static class Functions
         v.Float3.Y += a.Float3.Y * deltaTime;
         v.Float3.Z += a.Float3.Z * deltaTime;
     }
-    
-    
+
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void UpdateVelocity(in float3 a, ref float3 v, float deltaTime)
     {
@@ -376,22 +392,6 @@ public static class Functions
         t.Float3.Y += v.Float3.Y * deltaTime;
         t.Float3.Z += v.Float3.Z * deltaTime;
     }
-}
-
-
-[EntityRefStruct]
-public ref partial struct VelocityAndTranslation
-{
-    public ref readonly Velocity Velocity;
-    public ref Translation Translation;
-}
-
-
-[EntityRefStruct]
-public ref partial struct AccelerationAndVelocity
-{
-    public ref readonly Acceleration Acceleration;
-    public ref Velocity Velocity;
 }
 
 
