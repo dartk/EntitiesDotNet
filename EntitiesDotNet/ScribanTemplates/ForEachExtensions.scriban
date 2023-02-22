@@ -78,18 +78,19 @@ for $count in 1..type_parameters_count
     }}
     
     [SupportsInlining("""
-        if (!@this.Archetype.Contains<{{ $inlined_type_parameters_str }}>()) {
+        if (@this.Count == 0 || !@this.Archetype.Contains<{{ $inlined_type_parameters_str }}>()) {
             return;
         }
         
         var __count = @this.Count;
         {{- for $i in 0..($count - 1) }}
-        var __span{{ $i }} = @this.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<{{ func_arg_type $i }}>();
+        ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
+        {func.body}
         
-        for (var __i = 0; __i < __count; ++__i) {
+        for (var __i = 1; __i < __count; ++__i) {
             {{- for $i in 0..($count - 1) }}
-            ref {{ if $i < $read_count; "readonly "; end ~}} var {{ func_arg $i }} = ref __span{{ $i }}[__i];
+            {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
             {{- end }}
             {func.body}
         }
@@ -111,19 +112,20 @@ for $count in 1..type_parameters_count
     
     
     [SupportsInlining("""
-        if (!@this.Archetype.Contains<{{ $inlined_type_parameters_str_offset }}>()) {
+        if (@this.Count == 0 || !@this.Archetype.Contains<{{ $inlined_type_parameters_str_offset }}>()) {
             return;
         }
         
         var __count = @this.Count;
-        {{- for $i in 0..($count - 1) }}
-        var __span{{ $i }} = @this.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<{{ func_arg_type ($i + 1) }}>();
+        {{- for $i in 1..$count }}
+        ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
+        {func.body}
         
-        for (var __i = 0; __i < __count; ++__i) {
+        for (var __i = 1; __i < __count; ++__i) {
             var {{ func_arg 0 }} = __i;
-            {{- for $i in 0..($count - 1) }}
-            ref {{ if $i < $read_count; "readonly "; end ~}} var {{ func_arg ($i + 1) }} = ref __span{{ $i }}[__i];
+            {{- for $i in 1..$count }}
+            {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
             {{- end }}
             {func.body}
         }
@@ -146,18 +148,19 @@ for $count in 1..type_parameters_count
     
     [SupportsInlining("""
         foreach (var __array in @this) {
-            if (!__array.Archetype.Contains<{{ $inlined_type_parameters_str }}>()) {
+            if (__array.Count == 0 || !__array.Archetype.Contains<{{ $inlined_type_parameters_str }}>()) {
                 continue;
             }
             
             var __count = __array.Count;
             {{- for $i in 0..($count - 1) }}
-            var __span{{ $i }} = __array.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<{{ func_arg_type $i }}>();
+            ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
+            {func.body}
             
-            for (var __i = 0; __i < __count; ++__i) {
+            for (var __i = 1; __i < __count; ++__i) {
                 {{- for $i in 0..($count - 1) }}
-                ref {{ if $i < $read_count; "readonly "; end ~}} var {{ func_arg $i }} = ref __span{{ $i }}[__i];
+                {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
                 {{- end }}
                 {func.body}
             }
@@ -184,19 +187,20 @@ for $count in 1..type_parameters_count
     [SupportsInlining("""
         var __index = 0;
         foreach (var __array in @this) {
-            if (!__array.Archetype.Contains<{{ $inlined_type_parameters_str_offset }}>()) {
+            if (__array.Count == 0 || !__array.Archetype.Contains<{{ $inlined_type_parameters_str_offset }}>()) {
                 continue;
             }
             
             var __count = __array.Count;
-            {{- for $i in 0..($count - 1) }}
-            var __span{{ $i }} = __array.Get{{ if $i < $read_count; "ReadOnly"; end }}Span<{{ func_arg_type ($i + 1) }}>();
+            {{- for $i in 1..$count }}
+            ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
+            {func.body}
             
-            for (var __i = 0; __i < __count; ++__i) {
+            for (var __i = 1; __i < __count; ++__i) {
                 var {{ func_arg 0 }} = __index++;
-                {{- for $i in 0..($count - 1) }}
-                ref {{ if $i < $read_count; "readonly "; end ~}} var {{ func_arg ($i + 1) }} = ref __span{{ $i }}[__i];
+                {{- for $i in 1..$count }}
+                {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
                 {{- end }}
                 {func.body}
             }
