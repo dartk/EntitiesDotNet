@@ -1,5 +1,6 @@
-﻿using CSharp.SourceGen.Inlining.Attributes;
+﻿using CSharp.SourceGen.Inlining;
 using EntitiesDotNet;
+using Xunit.Abstractions;
 
 
 namespace EntityComponentSystem.Tests.Inlining;
@@ -7,15 +8,51 @@ namespace EntityComponentSystem.Tests.Inlining;
 
 public partial class InliningTests
 {
-    [GenerateInlined(nameof(ForEachArrays_Inlined))]
-    public void ForEachArrays(EntityArrays arrays)
+    public InliningTests(ITestOutputHelper output)
+    {
+        this.Output = output;
+    }
+
+
+    public ITestOutputHelper Output { get; }
+
+
+    [Fact]
+    public void Test()
+    {
+        var em = new EntityManager();
+        for (var i = 0; i < 10; ++i)
+        {
+            em.CreateEntity(Archetype<string, double>.Instance);
+        }
+
+        em.Entities.ForEach((int index, ref double d) => d = index);
+
+        InlinedMethods.ForEachArrays(em.Entities);
+
+        this.Output.WriteLine(em.ToReadableString());
+    }
+}
+
+
+public static partial class InlinedMethods
+{
+    [Inline.Public(nameof(ForEachArrays_Inlined))]
+    public static void ForEachArrays(EntityArrays arrays)
     {
         arrays.ForEach([Inline](int index, ref string s, ref double d) => { s = d.ToString(); });
+    }
+
+
+    [Inline.Public(nameof(ForEachArraysWithIndex_Inlined))]
+    public static void ForEachArraysWithIndex(EntityArrays arrays)
+    {
         arrays.ForEach([Inline](ref string s, ref double d) => { s = d.ToString(); });
     }
-    
-    [GenerateInlined(nameof(ForEach_Inlined))]
-    public void ForEach(IComponentArray array)
+
+
+    [Inline.Public(nameof(ForEach_Inlined))]
+    public static void ForEach(IComponentArray array)
     {
         array.ForEach([Inline](int index, ref string s, ref double d) => { s = d.ToString(); });
         array.ForEach([Inline](ref string s, ref double d) => { s = d.ToString(); });

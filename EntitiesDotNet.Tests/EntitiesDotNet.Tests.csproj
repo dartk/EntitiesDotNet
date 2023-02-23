@@ -12,7 +12,7 @@
 
     <ItemGroup>
         <Compile Include="..\EntitiesDotNet.Generators\RuntimeAttributes\*.cs" />
-        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha7" PrivateAssets="all" />
+        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha10" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,10 +32,5 @@
         <ProjectReference Include="..\EntitiesDotNet\EntitiesDotNet.csproj" />
         <ProjectReference Include="..\EntitiesDotNet.Generators\EntitiesDotNet.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
-
-    <PropertyGroup>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
-    </PropertyGroup>
 
 </Project>

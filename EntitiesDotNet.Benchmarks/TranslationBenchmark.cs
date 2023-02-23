@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
+using CSharp.SourceGen.Inlining;
 using static EntitiesDotNet.Benchmarks.Functions;
 
 
@@ -10,7 +11,7 @@ namespace EntitiesDotNet.Benchmarks;
 public class TranslationBenchmark
 {
     // [Params(10_000, 100_000, 1_000_000)]
-    [Params(10_000)]
+    [Params(100_000)]
     public int N { get; set; }
 
 
@@ -24,7 +25,6 @@ public class TranslationBenchmark
         this._entityRefSystem = new EntityRefSystem(this.Entities);
         this._readWriteSystem = new ReadWriteSystem(this.Entities);
         this._readWriteNativeSystem = new ReadWriteNativeSystem(this.Entities);
-        this._readWriteUnsafeSystem = new ReadWriteUnsafeSystem(this.Entities);
         this._foreachSystem = new ForEachSystem(this.Entities);
         this._foreachGeneratedSystem = new ForEachGeneratedSystem(this.Entities);
         this._enttSystem = new EnttSystem(this.N);
@@ -88,7 +88,7 @@ public class TranslationBenchmark
     }
 
 
-    [Benchmark]
+    // [Benchmark]
     public void EntityRef()
     {
         this._entityRefSystem.DeltaTime = DeltaTime;
@@ -96,7 +96,7 @@ public class TranslationBenchmark
     }
 
 
-    [Benchmark]
+    // [Benchmark]
     public void EntityRef_ForEach()
     {
         this._entityRefSystem.DeltaTime = DeltaTime;
@@ -120,31 +120,14 @@ public class TranslationBenchmark
     }
 
 
-    // [Benchmark]
-    public void ReadWriteUnsafe()
-    {
-        this._readWriteUnsafeSystem.DeltaTime = DeltaTime;
-        this._readWriteUnsafeSystem.Execute();
-    }
-
-
-    // [Benchmark]
-    public void ReadWriteUnsafe2()
-    {
-        this._readWriteUnsafeSystem.DeltaTime = DeltaTime;
-        this._readWriteUnsafeSystem.Execute2();
-    }
-
-
-    // [Benchmark]
-    public void ForEach()
-    {
-        this._foreachSystem.DeltaTime = DeltaTime;
-        this._foreachSystem.Execute();
-    }
-
-
     [Benchmark(Baseline = true)]
+    public void ForEachInlined()
+    {
+        ForEachInlinedSystem.Execute_Inlined(this.Entities, DeltaTime);
+    }
+
+
+    [Benchmark]
     public void ForEachGenerated()
     {
         this._foreachGeneratedSystem.DeltaTime = DeltaTime;
@@ -159,11 +142,17 @@ public class TranslationBenchmark
     }
 
 
+    [Benchmark]
+    public void ForEach()
+    {
+        ForEachInlinedSystem.Execute_Regular(this.Entities, DeltaTime);
+    }
+
+
     private EntityManager _entityManager;
     private EntityRefSystem _entityRefSystem;
     private ReadWriteSystem _readWriteSystem;
     private ReadWriteNativeSystem _readWriteNativeSystem;
-    private ReadWriteUnsafeSystem _readWriteUnsafeSystem;
     private ForEachSystem _foreachSystem;
     private ForEachGeneratedSystem _foreachGeneratedSystem;
     private EnttSystem _enttSystem;
@@ -252,58 +241,6 @@ public class ReadWriteSystem : ComponentSystem
 }
 
 
-public class ReadWriteUnsafeSystem : ComponentSystem
-{
-    public ReadWriteUnsafeSystem(EntityArrays entities) : base(entities)
-    {
-    }
-
-
-    protected override unsafe void OnExecute()
-    {
-        foreach (var (count, acceleration, velocity) in
-            Read<Acceleration>.Write<Velocity>.From(this.Entities))
-        {
-            fixed (Acceleration* accelerationPtr = acceleration)
-            fixed (Velocity* velocityPtr = velocity)
-            {
-                var accelerationPtr2 = accelerationPtr;
-                var velocityPtr2 = velocityPtr;
-                for (var i = 0; i < count; ++i)
-                {
-                    UpdateVelocity(*accelerationPtr2, ref *velocityPtr2, this.DeltaTime);
-                    ++accelerationPtr2;
-                    ++velocityPtr2;
-                }
-            }
-        }
-    }
-
-
-    public unsafe void Execute2()
-    {
-        foreach (var (count, acceleration, velocity) in
-            Read<Acceleration>.Write<Velocity>.From(this.Entities))
-        {
-            fixed (Acceleration* accelerationPtr = acceleration)
-            fixed (Velocity* velocityPtr = velocity)
-            {
-                var accelerationPtr2 = (float3*)accelerationPtr;
-                var velocityPtr2 = (float3*)velocityPtr;
-
-                for (var i = 0; i < count; ++i)
-                {
-                    UpdateVelocity(*accelerationPtr2++, ref *velocityPtr2++, this.DeltaTime);
-                }
-            }
-        }
-    }
-
-
-    public float DeltaTime;
-}
-
-
 public class ReadWriteNativeSystem : ComponentSystem
 {
     public ReadWriteNativeSystem(EntityArrays entities) : base(entities)
@@ -350,7 +287,7 @@ public class ForEachSystem : ComponentSystem
 
     protected override void OnExecute()
     {
-        this.Entities.ForEach((in Acceleration a, ref Velocity v) =>
+        this.Entities.ForEach([Inline](in Acceleration a, ref Velocity v) =>
             UpdateVelocity(a, ref v, this.DeltaTime));
         // this.Entities.ForEach((in Velocity v, ref Translation t) =>
         //     UpdateTranslation(v, ref t, this.DeltaTime));
@@ -376,6 +313,35 @@ public partial class ForEachGeneratedSystem : ComponentSystem
 
         // this.Entities.ForEach((in Velocity v, ref Translation t) =>
         //     UpdateTranslation(v, ref t, this.DeltaTime));
+    }
+}
+
+
+public class InlinedPublicAttribute : Attribute
+{
+    public InlinedPublicAttribute(string name)
+    {
+    }
+}
+
+
+public class InlinedPrivateAttribute : Attribute
+{
+    public InlinedPrivateAttribute(string name)
+    {
+    }
+}
+
+
+public static partial class ForEachInlinedSystem
+{
+    [Inline.Public(nameof(Execute_Inlined))]
+    public static void Execute_Regular(EntityArrays entities, float deltaTime)
+    {
+        entities.ForEach([Inline](in Acceleration a, ref Velocity v) =>
+        {
+            UpdateVelocity(a, ref v, deltaTime);
+        });
     }
 }
 

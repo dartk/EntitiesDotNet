@@ -13,7 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
+        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha10" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
