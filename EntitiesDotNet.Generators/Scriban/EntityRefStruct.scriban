@@ -261,6 +261,9 @@ public static partial class EntityRefForEachExtensions
     [Pure]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static {{ name }}.ArrayEnumerable From(IEnumerable<IComponentArray> arrayEnumerable) => new (arrayEnumerable);
+    
+    
+    public static Archetype Archetype => Archetype<{{ all_components | array.map "type" | array.join ", " }}>.Instance;
 
 
     public static class Delegates
