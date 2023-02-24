@@ -1,8 +1,5 @@
-﻿using System.Collections.Immutable;
-using CSharp.SourceGen.Extensions;
+﻿using CSharp.SourceGen.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Scriban;
 
 
@@ -13,7 +10,7 @@ using Scriban;
 namespace EntitiesDotNet.Generators;
 
 
-public static class EntityRef
+internal static class EntityRef
 {
     private const string AttributeName = "EntityRef";
 
@@ -31,12 +28,12 @@ public static class EntityRef
     }
 
 
-    public static IncrementalValuesProvider<FileNameWithText>
+    public static IncrementalValuesProvider<Result>
         CreateProvider(IncrementalGeneratorInitializationContext context)
     {
         return context.SyntaxProvider
             .CreateSyntaxProvider(Predicate, Transform)
-            .Where(static x => !x.IsEmpty);
+            .Where(static x => x != null)!;
     }
 
 
@@ -44,88 +41,99 @@ public static class EntityRef
         node.IsAttribute(AttributeName);
 
 
-    public static FileNameWithText Transform(GeneratorSyntaxContext context,
+    public static Result? Transform(GeneratorSyntaxContext context,
         CancellationToken token)
     {
-        if (!context.TryGetAttributeAppliedType(
-            out var typeDeclarationSyntax, out var typeSymbol))
+        try
         {
-            return default;
-        }
-
-
-        var readMembers = new List<ComponentInfo>();
-        var writeMembers = new List<ComponentInfo>();
-
-        foreach (var member in typeSymbol.GetMembers())
-        {
-            if (member is not IFieldSymbol fieldSymbol)
+            if (!context.TryGetAttributeAppliedType(
+                out var typeDeclarationSyntax, out var typeSymbol))
             {
-                continue;
+                return null;
             }
 
-            if (fieldSymbol.DeclaredAccessibility != Accessibility.Public)
-            {
-                continue;
-            }
 
-            foreach (var @ref in fieldSymbol.DeclaringSyntaxReferences)
+            var readMembers = new List<ComponentInfo>();
+            var writeMembers = new List<ComponentInfo>();
+
+            foreach (var member in typeSymbol.GetMembers())
             {
-                var node = @ref.GetSyntax();
-                var parent = node.Parent;
-                if (parent == null)
+                if (member is not IFieldSymbol fieldSymbol)
                 {
                     continue;
                 }
 
-                var parentStr = parent.ToString();
-                if (parentStr.Contains("ref readonly"))
+                if (fieldSymbol.DeclaredAccessibility != Accessibility.Public)
                 {
-                    readMembers.Add(
-                        new ComponentInfo(
-                            member.Name,
-                            fieldSymbol.Type.ToDisplayString()
-                        ));
+                    continue;
                 }
-                else if (parentStr.Contains("ref "))
+
+                foreach (var @ref in fieldSymbol.DeclaringSyntaxReferences)
                 {
-                    writeMembers.Add(
-                        new ComponentInfo(
-                            member.Name,
-                            fieldSymbol.Type.ToDisplayString()
-                        ));
+                    var node = @ref.GetSyntax();
+                    var parent = node.Parent;
+                    if (parent == null)
+                    {
+                        continue;
+                    }
+
+                    var parentStr = parent.ToString();
+                    if (parentStr.Contains("ref readonly"))
+                    {
+                        readMembers.Add(
+                            new ComponentInfo(
+                                member.Name,
+                                fieldSymbol.Type.ToDisplayString()
+                            ));
+                    }
+                    else if (parentStr.Contains("ref "))
+                    {
+                        writeMembers.Add(
+                            new ComponentInfo(
+                                member.Name,
+                                fieldSymbol.Type.ToDisplayString()
+                            ));
+                    }
                 }
             }
+
+            if (!readMembers.Any() && !writeMembers.Any())
+            {
+                return null;
+            }
+
+            var declaration = QualifiedDeclarationInfo.FromSyntax(typeDeclarationSyntax);
+            token.ThrowIfCancellationRequested();
+
+
+            var info = new Info(
+                typeSymbol.SuggestedFileName(),
+                typeSymbol.Name,
+                typeSymbol.ToString(),
+                GetExtensionsClassAccessibility(typeSymbol),
+                declaration.NamespaceOpen(),
+                declaration.NamespaceClose(),
+                declaration.TypeOpenNoNamespace(),
+                declaration.TypeCloseNoNamespace(),
+                readMembers,
+                writeMembers);
+
+            var text = Template.Render(info);
+
+            return new Result.Ok(new FileNameWithText
+            {
+                FileName = info.FileName,
+                Text = text
+            });
         }
-
-        if (!readMembers.Any() && !writeMembers.Any())
+        catch (OperationCanceledException)
         {
-            return default;
+            throw;
         }
-
-        var declaration = QualifiedDeclarationInfo.FromSyntax(typeDeclarationSyntax);
-        token.ThrowIfCancellationRequested();
-
-
-        var info = new Info(
-            typeSymbol.SuggestedFileName(),
-            typeSymbol.Name,
-            typeSymbol.ToString(),
-            GetExtensionsClassAccessibility(typeSymbol),
-            declaration.NamespaceOpen(),
-            declaration.NamespaceClose(),
-            declaration.TypeOpenNoNamespace(),
-            declaration.TypeCloseNoNamespace(),
-            readMembers,
-            writeMembers);
-
-        var text = Template.Render(info);
-
-        return new FileNameWithText
+        catch (Exception ex)
         {
-            FileName = info.FileName,
-            Text = text
-        };
+            return new Result.Error(ex);
+        }
     }
 
 
