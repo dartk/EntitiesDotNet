@@ -26,147 +26,64 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using CSharp.SourceGen.Inlining;
 
-{{ type_open }}
-{
+{{ namespace_open }}
 
-    {{- all_components = array.add_range read_components write_components }}
-    {{-
-        all_components_with_spans = read_components |
+
+{{-
+    all_components = array.add_range read_components write_components
+    all_components_with_spans = read_components |
+        array.each @(do
+            ret {
+                span: ("ReadOnlySpan<" + $0.type + ">"),
+                name: $0.name
+            }
+        end) |
+        array.concat (write_components |
             array.each @(do
                 ret {
-                    span: ("ReadOnlySpan<" + $0.type + ">"),
+                    span: ("Span<" + $0.type + ">"),
                     name: $0.name
                 }
-            end) |
-            array.concat (write_components |
-                array.each @(do
-                    ret {
-                        span: ("Span<" + $0.type + ">"),
-                        name: $0.name
-                    }
-                end))
-    }}
-    
-    {{- # Creates string for IComponentArray.From method "Component0.Read, Component1.Write, ..." }}
-    {{-
-        if (array.size read_components) > 0
-            read_components_str = ".Read<" + (read_components | array.map "type" | array.join ", ") + ">"
-        else
-            read_components_str = ""
-        end
-        
-        if (array.size write_components) > 0
-            write_components_str = ".Write<" + (write_components | array.map "type" | array.join ", ") + ">"
-        else
-            write_components_str = ""
-        end
-    }}
-    
-    [Pure]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static {{ name }}.Array From(IComponentArray array) => new (array);
+            end))
 
+    # Creates string for IComponentArray.From method "Component0.Read, Component1.Write, ..."
+    if (array.size read_components) > 0
+        read_components_str = ".Read<" + (read_components | array.map "type" | array.join ", ") + ">"
+    else
+        read_components_str = ""
+    end
 
-    [Pure]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static {{ name }}.ArrayList From(IReadOnlyList<IComponentArray> arrayList) => new (arrayList);
+    if (array.size write_components) > 0
+        write_components_str = ".Write<" + (write_components | array.map "type" | array.join ", ") + ">"
+    else
+        write_components_str = ""
+    end
 
+    $type_parameters_str = all_components | array.map "type" | array.join ", "
 
-    [Pure]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static {{ name }}.ArrayEnumerable From(IEnumerable<IComponentArray> arrayEnumerable) => new (arrayEnumerable);
-
-
-    public static class Delegates
-    {
-        public delegate void ForEach({{ name }} entity);
-        public delegate void ForEachWithIndex(int index, {{ name }} entity);
-    }
-    
-    
-    public static void ForEach(IComponentArray array, Delegates.ForEach action)
-    {
-        {{- select_str = "EntitiesDotNet" + read_components_str + write_components_str }}
-        var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
-        
-        if (count == 0) return;
-        
-        var entity = new {{ name }}
-        {
-            {{- for component in all_components }}
-            {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
-            {{- end }}
-        };
-        
-        action(entity);
-        
-        for (var i = 1; i < count; ++i)
-        {
-            {{- for component in read_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
-            {{- end }}
-            
-            {{- for component in write_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
-            {{- end }}
-            
-            action(entity);
-        }
-    }
-    
-    
-    public static void ForEach(IComponentArray array, Delegates.ForEachWithIndex action)
-    {
-        {{- select_str = "EntitiesDotNet" + read_components_str + write_components_str }}
-        var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
-        
-        if (count == 0) return;
-        
-        var entity = new {{ name }}
-        {
-            {{- for component in all_components }}
-            {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
-            {{- end }}
-        };
-        
-        action(0, entity);
-        
-        for (var i = 1; i < count; ++i)
-        {
-            {{- for component in read_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
-            {{- end }}
-            
-            {{- for component in write_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
-            {{- end }}
-            
-            action(i, entity);
-        }
-    }
-    
-    
-    {{ $type_parameters_str = all_components | array.map "type" | array.join ", " }}
-    
-    {{-
     func component_span_name (name)
         ret "__" + name + "Span"
     end
-    
+
     func component_name_at (index)
         ret all_components[index].name
     end
-    
+
     func component_span_name_at (index)
         ret all_components[index].name + "Span";
     end
-    
+
     $entity = "{action.arg0}"
-    -}}
     
+    select_str = "EntitiesDotNet" + read_components_str + write_components_str
+-}}
+
+{{- if extensions_accessibility }}
+public static partial class EntityRefForEachExtensions
+{
     [SupportsInlining("""
-        {{name}} {{ $entity }} = default;
-        foreach (var __array in __arrays) {
+        {{ full_name }} {{ $entity }} = default;
+        foreach (var __array in @this) {
             var (__count, {{ all_components | array.each @(do; ret "__" + $0.name + "Span"; end) | array.join ", " }}) = {{ select_str }}.From(__array);
             if (__count == 0) continue;
             
@@ -192,14 +109,165 @@ using CSharp.SourceGen.Inlining;
             }
         }
         """)]
-    public static void ForEach(EntityArrays arrays, Delegates.ForEach action)
+    {{ extensions_accessibility }} static void ForEach(this EntityArrays @this, {{ full_name }}.Delegates.ForEach action)
     {
-        foreach (var array in arrays)
+        foreach (var array in @this)
         {
-            ForEach(array, action);
+            array.ForEach(action);
         }
     }
     
+    
+    [SupportsInlining("""
+        var __index = 0;
+        var {action.arg1} = 0;
+        {{ full_name }} {{ $entity }} = default;
+        foreach (var __array in @this) {
+            var (__count, {{ all_components | array.each @(do; ret "__" + $0.name + "Span"; end) | array.join ", " }}) = {{ select_str }}.From(__array);
+            if (__count == 0) continue;
+            
+            {{- $count = array.size all_components }}
+            {{- for $i in 0..($count - 1) }}
+            ref var __{{ component_name_at $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__{{ component_span_name_at $i }});
+            {{- end }}
+            
+            {{- for $i in 0..($count - 1) }}
+            {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
+            {{- end }}
+            {action.arg1} = __index++;
+            {action.body}
+            
+            for (var __i = 1; __i < __count; ++__i) {
+                {{- for $i in 0..($count - 1) }}
+                __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1);
+                {{- end }}
+                
+                {{- for $i in 0..($count - 1) }}
+                {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
+                {{- end }}
+                {action.arg1} = __index++;
+                {action.body}
+            }
+        }
+        """)]
+    {{ extensions_accessibility }} static void ForEach(this EntityArrays @this, {{ full_name }}.Delegates.ForEach_I action)
+    {
+        var index = 0;
+        foreach (var array in @this)
+        {
+            var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
+            
+            if (count == 0) continue;
+            
+            var entity = new {{ full_name }}
+            {
+                {{- for component in all_components }}
+                {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
+                {{- end }}
+            };
+            
+            action(entity, index++);
+            
+            for (var i = 1; i < count; ++i)
+            {
+                {{- for component in read_components }}
+                entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
+                {{- end }}
+                
+                {{- for component in write_components }}
+                entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
+                {{- end }}
+                
+                action(entity, index++);
+            }
+        }
+    }
+    
+    
+    {{ extensions_accessibility }} static void ForEach(this IComponentArray array, {{ full_name }}.Delegates.ForEach action)
+    {
+        var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
+        
+        if (count == 0) return;
+        
+        var entity = new {{ full_name }}
+        {
+            {{- for component in all_components }}
+            {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
+            {{- end }}
+        };
+        
+        action(entity);
+        
+        for (var i = 1; i < count; ++i)
+        {
+            {{- for component in read_components }}
+            entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
+            {{- end }}
+            
+            {{- for component in write_components }}
+            entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
+            {{- end }}
+            
+            action(entity);
+        }
+    }
+    
+    
+    {{ extensions_accessibility }} static void ForEach(this IComponentArray array, {{ full_name }}.Delegates.ForEach_I action)
+    {
+        var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
+        
+        if (count == 0) return;
+        
+        var entity = new {{ full_name }}
+        {
+            {{- for component in all_components }}
+            {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
+            {{- end }}
+        };
+        
+        action(entity, 0);
+        
+        for (var i = 1; i < count; ++i)
+        {
+            {{- for component in read_components }}
+            entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
+            {{- end }}
+            
+            {{- for component in write_components }}
+            entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
+            {{- end }}
+            
+            action(entity, i);
+        }
+    }
+}
+{{- end }}
+
+{{ type_open }}
+{
+    
+    [Pure]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static {{ name }}.Array From(IComponentArray array) => new (array);
+
+
+    [Pure]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static {{ name }}.ArrayList From(IReadOnlyList<IComponentArray> arrayList) => new (arrayList);
+
+
+    [Pure]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static {{ name }}.ArrayEnumerable From(IEnumerable<IComponentArray> arrayEnumerable) => new (arrayEnumerable);
+
+
+    public static class Delegates
+    {
+        public delegate void ForEach(in {{ name }} entity);
+        public delegate void ForEach_I(in {{ name }} entity, int index);
+    }
     
     public readonly ref struct Array {
 
@@ -349,3 +417,5 @@ using CSharp.SourceGen.Inlining;
 
 }
 {{ type_close }}
+
+{{ namespace_close }}

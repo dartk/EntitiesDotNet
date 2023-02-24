@@ -10,7 +10,7 @@ namespace EntitiesDotNet.Benchmarks;
 public class TranslationBenchmark
 {
     // [Params(10_000, 100_000, 1_000_000)]
-    [Params(10_000)]
+    [Params(100_000)]
     public int N { get; set; }
 
 
@@ -126,11 +126,11 @@ public class TranslationBenchmark
     }
     
     
-    // [Benchmark]
-    // public void ForEachInlined_EntityRef()
-    // {
-    //     ForEachInlinedSystem_EntityRef.Execute_Inlined(this.Entities, DeltaTime);
-    // }
+    [Benchmark]
+    public void ForEachInlined_EntityRef()
+    {
+        ForEachInlinedSystem_EntityRef.Execute_Inlined(this.Entities, DeltaTime);
+    }
 
 
     [Benchmark]
@@ -173,12 +173,14 @@ public class TranslationBenchmark
 }
 
 
-
-[EntityRefStruct]
-public ref partial struct UpdateVelocityEntity
+public static partial class EntityRef
 {
-    public ref readonly Acceleration Acceleration;
-    public ref Velocity Velocity;
+    [EntityRef]
+    public ref partial struct UpdateVelocityEntity
+    {
+        public ref readonly Acceleration Acceleration;
+        public ref Velocity Velocity;
+    }
 }
 
 
@@ -189,7 +191,7 @@ public partial class EntityRefSystem : ComponentSystem
     }
 
 
-    [EntityRefStruct]
+    [EntityRef]
     private ref partial struct UpdateTranslationEntity
     {
         public ref readonly Velocity Velocity;
@@ -199,7 +201,7 @@ public partial class EntityRefSystem : ComponentSystem
 
     protected override void OnExecute()
     {
-        foreach (var entity in UpdateVelocityEntity.From(this.Entities))
+        foreach (var entity in EntityRef.UpdateVelocityEntity.From(this.Entities))
         {
             UpdateVelocity(entity.Acceleration, ref entity.Velocity, this.DeltaTime);
         }
@@ -349,7 +351,7 @@ public static partial class ForEachInlinedSystem_EntityRef
     [Inline.Public(nameof(Execute_Inlined))]
     public static void Execute_Regular(EntityArrays entities, float deltaTime)
     {
-        UpdateVelocityEntity.ForEach_inlining(entities, [Inline](entity) =>
+        entities.ForEach([Inline](in EntityRef.UpdateVelocityEntity entity) =>
         {
             UpdateVelocity(entity.Acceleration, ref entity.Velocity, deltaTime);
         });

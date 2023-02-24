@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using EntitiesDotNet;
 using Xunit.Abstractions;
 
@@ -30,7 +29,7 @@ public partial record struct Height
 }
 
 
-[EntityRefStruct]
+[EntityRef]
 public ref partial struct WidthAndHeight
 {
     public ref Height Height;

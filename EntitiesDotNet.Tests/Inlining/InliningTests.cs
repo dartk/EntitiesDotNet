@@ -1,5 +1,4 @@
-﻿using CSharp.SourceGen.Inlining;
-using EntitiesDotNet;
+﻿using EntitiesDotNet;
 using Xunit.Abstractions;
 
 
@@ -59,20 +58,10 @@ public static partial class InlinedMethods
     }
 
 
-    [EntityRefStruct]
+    [EntityRef]
     private ref partial struct MyEntity
     {
         public ref readonly Velocity velocity;
         public ref Translation translation;
-    }
-
-
-    [Inline.Public(nameof(ForEachMyEntity_Inlined))]
-    public static void ForEachMyEntity(EntityArrays arrays_, float deltaTime)
-    {
-        MyEntity.ForEach_inlining(arrays_, [Inline] (entity) =>
-        {
-            entity.translation += entity.velocity * deltaTime;
-        });
     }
 }

@@ -12,11 +12,11 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
     {
         context.RegisterPostInitializationOutput(static context =>
         {
-            EntityRefStructGenerator.AddAttributes(context);
-            InliningGenerator.AddAttributes(context);
+            EntityRef.AddAttributes(context);
+            Inlining.AddAttributes(context);
         });
 
-        var entityRefProvider = EntityRefStructGenerator.CreateProvider(context);
+        var entityRefProvider = EntityRef.CreateProvider(context);
         context.RegisterSourceOutput(entityRefProvider, FileNameWithText.AddSource);
 
         var compilationWithGeneratedProvider = context.CompilationProvider
@@ -34,14 +34,14 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
 
 
         var inliningProvider = context.SyntaxProvider.CreateSyntaxProvider(
-                InliningGenerator.Predicate,
+                Inlining.Predicate,
                 static (context, _) => context.Node)
             .Combine(compilationWithGeneratedProvider)
             .Select(static (arg, token) =>
             {
                 var (node, compilationWithGenerated) = arg;
                 var semanticModel = compilationWithGenerated.GetSemanticModel(node.SyntaxTree);
-                return InliningGenerator.Transform(node, semanticModel, token);
+                return Inlining.Transform(node, semanticModel, token);
             })
             .Where(x => !x.IsEmpty)
             .Select(static (x, token) => x.FormatText(token));

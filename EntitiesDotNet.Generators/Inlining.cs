@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace EntitiesDotNet.Generators;
 
 
-public static class InliningGenerator
+public static class Inlining
 {
     private const string Inline = nameof(Inline);
     private const string SupportsInliningAttribute = nameof(SupportsInliningAttribute);
