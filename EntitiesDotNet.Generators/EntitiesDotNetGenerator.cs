@@ -17,7 +17,7 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
         });
 
         var entityRefProvider = EntityRef.CreateProvider(context);
-        context.RegisterSourceOutput(entityRefProvider, static (context, arg) =>
+        context.RegisterImplementationSourceOutput(entityRefProvider, static (context, arg) =>
         {
             switch (arg)
             {
@@ -80,7 +80,7 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
             })
             .Where(x => x != null);
 
-        context.RegisterSourceOutput(inliningProvider, static (context, result) =>
+        context.RegisterImplementationSourceOutput(inliningProvider, static (context, result) =>
         {
             switch (result)
             {
