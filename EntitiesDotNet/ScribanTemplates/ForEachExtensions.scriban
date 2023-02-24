@@ -70,7 +70,7 @@ for $count in 1..type_parameters_count
             end) |
             array.join ", "
             
-        $inlined_type_parameters_str_offset = 1..$count |
+        $inlined_type_parameters_str_offset = 0..($count - 1) |
             array.each @(do
                 ret func_arg_type $0
             end) |
@@ -117,20 +117,21 @@ for $count in 1..type_parameters_count
         }
         
         var __count = @this.Count;
-        {{- for $i in 1..$count }}
+        {{- for $i in 0..($count - 1) }}
         ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
+        var {{ func_arg $count }} = 0;
         {func.body}
         
         for (var __i = 1; __i < __count; ++__i) {
-            var {{ func_arg 0 }} = __i;
-            {{- for $i in 1..$count }}
+            {{ func_arg $count }} = __i;
+            {{- for $i in 0..($count - 1) }}
             {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
             {{- end }}
             {func.body}
         }
     """)]
-    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, RefFunc_I_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, RefFunc_{{ $suffix }}_I<{{ $type_parameters_str }}> func) {
         if (!@this.Archetype.Contains<{{ $type_parameters_str }}>()) {
             return;
         }
@@ -141,7 +142,7 @@ for $count in 1..type_parameters_count
         {{- end }}
         
         for (var i = 0; i < count; ++i) {
-            func(i, {{~ RefFuncArgumentList $count $read_count ~}});
+            func({{~ RefFuncArgumentList $count $read_count ~}}, i);
         }
     }
     
@@ -186,27 +187,29 @@ for $count in 1..type_parameters_count
     
     [SupportsInlining("""
         var __index = 0;
+        var {{ func_arg $count }} = 0;
         foreach (var __array in @this) {
             if (__array.Count == 0 || !__array.Archetype.Contains<{{ $inlined_type_parameters_str_offset }}>()) {
                 continue;
             }
             
             var __count = __array.Count;
-            {{- for $i in 1..$count }}
+            {{- for $i in 0..($count - 1) }}
             ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
+            {{ func_arg $count }} = __index++;
             {func.body}
             
             for (var __i = 1; __i < __count; ++__i) {
-                var {{ func_arg 0 }} = __index++;
-                {{- for $i in 1..$count }}
+                {{- for $i in 0..($count - 1) }}
                 {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
                 {{- end }}
+                {{ func_arg $count }} = __index++;
                 {func.body}
             }
         }
     """)]
-    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, RefFunc_I_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, RefFunc_{{ $suffix }}_I<{{ $type_parameters_str }}> func) {
         var index = 0;
         foreach (var array in @this) {
             if (!array.Archetype.Contains<{{ $type_parameters_str }}>()) {
@@ -219,7 +222,7 @@ for $count in 1..type_parameters_count
             {{- end }}
             
             for (var i = 0; i < count; ++i) {
-                func(index++, {{~ RefFuncArgumentList $count $read_count ~}});
+                func({{~ RefFuncArgumentList $count $read_count ~}}, index++);
             }
         }
     }

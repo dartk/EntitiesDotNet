@@ -25,7 +25,7 @@ public partial class InliningTests
             em.CreateEntity(Archetype<string, double>.Instance);
         }
 
-        em.Entities.ForEach((int index, ref double d) => d = index);
+        em.Entities.ForEach((ref double d, int index) => d = index);
 
         InlinedMethods.ForEachArrays(em.Entities);
 
@@ -39,7 +39,7 @@ public static partial class InlinedMethods
     [Inline.Public(nameof(ForEachArrays_Inlined))]
     public static void ForEachArrays(EntityArrays arrays)
     {
-        arrays.ForEach([Inline](int index, ref string s, ref double d) => { s = d.ToString(); });
+        arrays.ForEach([Inline](ref string s, ref double d, int index) => { s = d.ToString(); });
     }
 
 
@@ -53,7 +53,7 @@ public static partial class InlinedMethods
     [Inline.Public(nameof(ForEach_Inlined))]
     public static void ForEach(IComponentArray array)
     {
-        array.ForEach([Inline](int index, ref string s, ref double d) => { s = d.ToString(); });
+        array.ForEach([Inline](ref string s, ref double d, int index) => { s = d.ToString(); });
         array.ForEach([Inline](ref string s, ref double d) => { s = d.ToString(); });
     }
 

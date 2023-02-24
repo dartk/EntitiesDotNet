@@ -148,7 +148,7 @@ public class ComponentArrayTests
         array.Add(5);
         Assert.Equal(5, array.Count);
 
-        array.ForEach((int i, ref Width width, ref Height height) =>
+        array.ForEach((ref Width width, ref Height height, int i) =>
         {
             width = i * 2;
             height = i * 3;

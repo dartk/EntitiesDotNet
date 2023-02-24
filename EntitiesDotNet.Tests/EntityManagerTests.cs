@@ -24,8 +24,8 @@ public class EntityManagerTests
         manager.CreateEntity(10);
         manager.CreateEntity(12, 120.0f);
 
-        manager.Entities.ForEach((int i, in int value) =>
-            this.Output.WriteLine($"#{i}: {value}"));
+        manager.Entities.ForEach((in int value, int index) =>
+            this.Output.WriteLine($"#{index}: {value}"));
 
         this.Output.WriteLine(manager.ToReadableString());
     }
