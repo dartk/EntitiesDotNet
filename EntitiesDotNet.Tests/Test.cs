@@ -99,7 +99,7 @@ public class ComponentArrayTests
         Assert.Equal(5, array.Count);
 
         var i = 0;
-        foreach (var item in WidthAndHeight.From(array))
+        foreach (var item in WidthAndHeight.From(new[] { array }))
         {
             item.Width = i * 2;
             item.Height = i * 3;
