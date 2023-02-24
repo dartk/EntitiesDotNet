@@ -1,7 +1,7 @@
 ﻿using static EntitiesDotNet.Benchmarks.Native;
 
 
-namespace EntitiesDotNet.Benchmarks;
+namespace EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark.Systems;
 
 
 public class EnttSystem : IDisposable

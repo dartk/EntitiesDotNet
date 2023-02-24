@@ -1,12 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
-using EntitiesDotNet.Benchmarks;
+using EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark;
 
 
-// var benchmark = new CalculateFloatTranslationBenchmark()
-// {
-//     N = 10
-// };
-// benchmark.GlobalSetup();
-// benchmark.ReadWriteNative();
-
-BenchmarkRunner.Run(typeof(TranslationBenchmark));
+BenchmarkRunner.Run(typeof(UpdateTranslationBenchmark));
