@@ -5,11 +5,11 @@ using EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark.Systems;
 namespace EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark;
 
 
-[MemoryDiagnoser]
+[MemoryDiagnoser, RPlotExporter]
 public class UpdateTranslationBenchmark
 {
     // [Params(10_000, 100_000, 1_000_000)]
-    [Params(10_000)]
+    [Params(100_000)]
     public int N { get; set; }
 
 
@@ -22,6 +22,7 @@ public class UpdateTranslationBenchmark
         this._entityManager = new EntityManager();
         this._foreachGeneratedSystem = new ForEachGeneratedSystem(this.Entities);
         this._enttSystem = new EnttSystem(this.N);
+        this._nativeArrays = Native.arrays_new(2 * this.N);
 
         var random = new Random(0);
 
@@ -79,10 +80,18 @@ public class UpdateTranslationBenchmark
     public void GlobalCleanup()
     {
         this._enttSystem.Dispose();
+        Native.arrays_delete(this._nativeArrays);
     }
 
 
     [Benchmark(Baseline = true)]
+    public void NativeArrays()
+    {
+        Native.arrays_update(this._nativeArrays, DeltaTime);
+    }
+
+
+    [Benchmark]
     public void ReadWrite_Native()
     {
         ReadWriteSystem.Execute_Native(this.Entities, DeltaTime);
@@ -123,24 +132,32 @@ public class UpdateTranslationBenchmark
     {
         ForEachSystem.Execute_Lambda(this.Entities, DeltaTime);
     }
-
-
+    
+    
     [Benchmark]
-    public void EntityRefForEach_Lambda()
+    public void EntityRef_From()
     {
-        EntityRefForEachSystem.Execute_Lambda(this.Entities, DeltaTime);
+        EntityRefSystem.Execute_From(this.Entities, DeltaTime);
     }
 
 
     [Benchmark]
-    public void EntityRefForEach_Inlined()
+    public void EntityRef_ForEach_Lambda()
     {
-        EntityRefForEachSystem.Execute_Inlined(this.Entities, DeltaTime);
+        EntityRefSystem.Execute_Lambda(this.Entities, DeltaTime);
+    }
+
+
+    [Benchmark]
+    public void EntityRef_ForEach_Inlined()
+    {
+        EntityRefSystem.Execute_Inlined(this.Entities, DeltaTime);
     }
 
 
     private EntityManager _entityManager;
     private ForEachGeneratedSystem _foreachGeneratedSystem;
     private EnttSystem _enttSystem;
+    private nint _nativeArrays;
     private EntityArrays Entities => this._entityManager.Entities;
 }

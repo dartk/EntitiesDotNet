@@ -9,6 +9,17 @@ struct float3
     float z;
 };
 
+struct arrays
+{
+    int count;
+    float3* velocities;
+    float3* translations;
+};
+
+
+DllExport arrays* arrays_new(int count);
+DllExport void arrays_delete(arrays* ptr);
+DllExport void arrays_update(const arrays* ptr, float delta_time);
 
 DllExport void* entt_create_registry();
 DllExport void entt_destroy_registry(void* registry);

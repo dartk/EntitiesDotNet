@@ -7,7 +7,8 @@ namespace EntitiesDotNet.Benchmarks;
 internal partial class Native
 {
     private const string LibPath = "x64/EntitiesDotNet.Benchmarks.Native.dll";
-    
+
+
     [LibraryImport(LibPath)]
     public static partial nint entt_create_registry();
 
@@ -30,11 +31,25 @@ internal partial class Native
 
 
     [LibraryImport(LibPath)]
-    public static unsafe partial void update_velocity(int count, UpdateTranslationBenchmark.Acceleration* accelerations,
+    public static unsafe partial void update_velocity(int count,
+        UpdateTranslationBenchmark.Acceleration* accelerations,
         UpdateTranslationBenchmark.Velocity* velocities, float deltaTime);
 
 
     [LibraryImport(LibPath)]
-    public static unsafe partial void update_translation(int count, UpdateTranslationBenchmark.Velocity* velocities,
+    public static unsafe partial void update_translation(int count,
+        UpdateTranslationBenchmark.Velocity* velocities,
         UpdateTranslationBenchmark.Translation* translations, float deltaTime);
+
+
+    [LibraryImport(LibPath)]
+    public static partial nint arrays_new(int count);
+
+
+    [LibraryImport(LibPath)]
+    public static partial void arrays_update(IntPtr ptr, float deltaTime);
+
+
+    [LibraryImport(LibPath)]
+    public static partial void arrays_delete(IntPtr ptr);
 }

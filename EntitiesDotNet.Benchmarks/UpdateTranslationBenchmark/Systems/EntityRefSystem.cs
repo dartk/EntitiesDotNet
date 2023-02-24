@@ -1,7 +1,7 @@
 namespace EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark.Systems;
 
 
-public static partial class EntityRefForEachSystem
+public static partial class EntityRefSystem
 {
     [EntityRef]
     public ref partial struct UpdateVelocityEntity
@@ -16,5 +16,14 @@ public static partial class EntityRefForEachSystem
     {
         entities.ForEach([Inline](in UpdateVelocityEntity entity) =>
             UpdateVelocity(entity.Acceleration, ref entity.Velocity, deltaTime));
+    }
+
+
+    public static void Execute_From(EntityArrays entities, float deltaTime)
+    {
+        foreach (var entity in UpdateVelocityEntity.From(entities))
+        {
+            UpdateVelocity(entity.Acceleration, ref entity.Velocity, deltaTime);
+        }
     }
 }
