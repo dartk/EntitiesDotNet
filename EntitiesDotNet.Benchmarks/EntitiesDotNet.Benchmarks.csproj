@@ -14,25 +14,26 @@
 
     <ItemGroup>
         <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
-        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha10" PrivateAssets="all" />
+<!--        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha10" PrivateAssets="all" />-->
+<!--        <ProjectReference Include="..\..\csharp-sourcegen-inlining\CSharp.SourceGen.Inlining\CSharp.SourceGen.Inlining.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />-->
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="x64\entt_system.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="x64\EntitiesDotNet.Benchmarks.Native.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-    
-    <ItemGroup>
-        <Compile Include="..\EntitiesDotNet.Generators\RuntimeAttributes\*.cs"/>
+        <None Update="x64\entt_system.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="x64\EntitiesDotNet.Benchmarks.Native.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
-    <PropertyGroup>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
-    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="..\EntitiesDotNet.Generators\RuntimeAttributes\*.cs" />
+    </ItemGroup>
+
+<!--    <PropertyGroup>-->
+<!--        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>-->
+<!--        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>-->
+<!--    </PropertyGroup>-->
 
 </Project>

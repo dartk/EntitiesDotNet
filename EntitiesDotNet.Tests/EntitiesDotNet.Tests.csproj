@@ -12,7 +12,6 @@
 
     <ItemGroup>
         <Compile Include="..\EntitiesDotNet.Generators\RuntimeAttributes\*.cs" />
-        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha10" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>

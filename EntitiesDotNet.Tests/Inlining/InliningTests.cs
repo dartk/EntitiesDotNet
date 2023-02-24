@@ -57,4 +57,22 @@ public static partial class InlinedMethods
         array.ForEach([Inline](int index, ref string s, ref double d) => { s = d.ToString(); });
         array.ForEach([Inline](ref string s, ref double d) => { s = d.ToString(); });
     }
+
+
+    [EntityRefStruct]
+    private ref partial struct MyEntity
+    {
+        public ref readonly Velocity velocity;
+        public ref Translation translation;
+    }
+
+
+    [Inline.Public(nameof(ForEachMyEntity_Inlined))]
+    public static void ForEachMyEntity(EntityArrays arrays_, float deltaTime)
+    {
+        MyEntity.ForEach_inlining(arrays_, [Inline] (entity) =>
+        {
+            entity.translation += entity.velocity * deltaTime;
+        });
+    }
 }

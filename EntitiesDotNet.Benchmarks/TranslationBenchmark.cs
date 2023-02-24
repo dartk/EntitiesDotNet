@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using CSharp.SourceGen.Inlining;
 using static EntitiesDotNet.Benchmarks.Functions;
 
 
@@ -11,7 +10,7 @@ namespace EntitiesDotNet.Benchmarks;
 public class TranslationBenchmark
 {
     // [Params(10_000, 100_000, 1_000_000)]
-    [Params(100_000)]
+    [Params(10_000)]
     public int N { get; set; }
 
 
@@ -100,7 +99,7 @@ public class TranslationBenchmark
     public void EntityRef_ForEach()
     {
         this._entityRefSystem.DeltaTime = DeltaTime;
-        this._entityRefSystem.OnExecuteForEach();
+        // this._entityRefSystem.OnExecuteForEach();
     }
 
 
@@ -125,6 +124,13 @@ public class TranslationBenchmark
     {
         ForEachInlinedSystem.Execute_Inlined(this.Entities, DeltaTime);
     }
+    
+    
+    // [Benchmark]
+    // public void ForEachInlined_EntityRef()
+    // {
+    //     ForEachInlinedSystem_EntityRef.Execute_Inlined(this.Entities, DeltaTime);
+    // }
 
 
     [Benchmark]
@@ -147,6 +153,13 @@ public class TranslationBenchmark
     {
         ForEachInlinedSystem.Execute_Regular(this.Entities, DeltaTime);
     }
+    
+    
+    // [Benchmark]
+    // public void ForEach_EntityRef()
+    // {
+    //     ForEachInlinedSystem_EntityRef.Execute_Regular(this.Entities, DeltaTime);
+    // }
 
 
     private EntityManager _entityManager;
@@ -157,6 +170,15 @@ public class TranslationBenchmark
     private ForEachGeneratedSystem _foreachGeneratedSystem;
     private EnttSystem _enttSystem;
     private EntityArrays Entities => this._entityManager.Entities;
+}
+
+
+
+[EntityRefStruct]
+public ref partial struct UpdateVelocityEntity
+{
+    public ref readonly Acceleration Acceleration;
+    public ref Velocity Velocity;
 }
 
 
@@ -175,14 +197,6 @@ public partial class EntityRefSystem : ComponentSystem
     }
 
 
-    [EntityRefStruct]
-    private ref partial struct UpdateVelocityEntity
-    {
-        public ref readonly Acceleration Acceleration;
-        public ref Velocity Velocity;
-    }
-
-
     protected override void OnExecute()
     {
         foreach (var entity in UpdateVelocityEntity.From(this.Entities))
@@ -197,11 +211,11 @@ public partial class EntityRefSystem : ComponentSystem
     }
 
 
-    public void OnExecuteForEach()
-    {
-        UpdateVelocityEntity.ForEach(this.Entities,
-            static entity => UpdateVelocity(entity.Acceleration, ref entity.Velocity, 1f / 30f));
-    }
+    // public void OnExecuteForEach()
+    // {
+    //     UpdateVelocityEntity.ForEach_inlining(this.Entities,
+    //         static entity => UpdateVelocity(entity.Acceleration, ref entity.Velocity, 1f / 30f));
+    // }
 
 
     public float DeltaTime = 1f / 30f;
@@ -317,22 +331,6 @@ public partial class ForEachGeneratedSystem : ComponentSystem
 }
 
 
-public class InlinedPublicAttribute : Attribute
-{
-    public InlinedPublicAttribute(string name)
-    {
-    }
-}
-
-
-public class InlinedPrivateAttribute : Attribute
-{
-    public InlinedPrivateAttribute(string name)
-    {
-    }
-}
-
-
 public static partial class ForEachInlinedSystem
 {
     [Inline.Public(nameof(Execute_Inlined))]
@@ -341,6 +339,19 @@ public static partial class ForEachInlinedSystem
         entities.ForEach([Inline](in Acceleration a, ref Velocity v) =>
         {
             UpdateVelocity(a, ref v, deltaTime);
+        });
+    }
+}
+
+
+public static partial class ForEachInlinedSystem_EntityRef
+{
+    [Inline.Public(nameof(Execute_Inlined))]
+    public static void Execute_Regular(EntityArrays entities, float deltaTime)
+    {
+        UpdateVelocityEntity.ForEach_inlining(entities, [Inline](entity) =>
+        {
+            UpdateVelocity(entity.Acceleration, ref entity.Velocity, deltaTime);
         });
     }
 }

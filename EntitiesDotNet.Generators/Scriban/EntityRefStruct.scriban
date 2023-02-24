@@ -24,6 +24,7 @@ end
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using CSharp.SourceGen.Inlining;
 
 {{ type_open }}
 {
@@ -49,13 +50,13 @@ using System.Runtime.InteropServices;
     {{- # Creates string for IComponentArray.From method "Component0.Read, Component1.Write, ..." }}
     {{-
         if (array.size read_components) > 0
-            read_components_str = ".Read<" + (read_components | array.each @(do; ret $0.type; end) | array.join ", ") + ">"
+            read_components_str = ".Read<" + (read_components | array.map "type" | array.join ", ") + ">"
         else
             read_components_str = ""
         end
         
         if (array.size write_components) > 0
-            write_components_str = ".Write<" + (write_components | array.each @(do; ret $0.type; end) | array.join ", ") + ">"
+            write_components_str = ".Write<" + (write_components | array.map "type" | array.join ", ") + ">"
         else
             write_components_str = ""
         end
@@ -145,6 +146,52 @@ using System.Runtime.InteropServices;
     }
     
     
+    {{ $type_parameters_str = all_components | array.map "type" | array.join ", " }}
+    
+    {{-
+    func component_span_name (name)
+        ret "__" + name + "Span"
+    end
+    
+    func component_name_at (index)
+        ret all_components[index].name
+    end
+    
+    func component_span_name_at (index)
+        ret all_components[index].name + "Span";
+    end
+    
+    $entity = "{action.arg0}"
+    -}}
+    
+    [SupportsInlining("""
+        {{name}} {{ $entity }} = default;
+        foreach (var __array in __arrays) {
+            var (__count, {{ all_components | array.each @(do; ret "__" + $0.name + "Span"; end) | array.join ", " }}) = {{ select_str }}.From(__array);
+            if (__count == 0) continue;
+            
+            {{- $count = array.size all_components }}
+            {{- for $i in 0..($count - 1) }}
+            ref var __{{ component_name_at $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__{{ component_span_name_at $i }});
+            {{- end }}
+            
+            {{- for $i in 0..($count - 1) }}
+            {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
+            {{- end }}
+            {action.body}
+            
+            for (var __i = 1; __i < __count; ++__i) {
+                {{- for $i in 0..($count - 1) }}
+                __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1);
+                {{- end }}
+                
+                {{- for $i in 0..($count - 1) }}
+                {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
+                {{- end }}
+                {action.body}
+            }
+        }
+        """)]
     public static void ForEach(EntityArrays arrays, Delegates.ForEach action)
     {
         foreach (var array in arrays)
