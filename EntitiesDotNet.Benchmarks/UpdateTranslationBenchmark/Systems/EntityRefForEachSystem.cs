@@ -15,8 +15,6 @@ public static partial class EntityRefForEachSystem
     public static void Execute_Lambda(EntityArrays entities, float deltaTime)
     {
         entities.ForEach([Inline](in UpdateVelocityEntity entity) =>
-        {
-            UpdateVelocity(entity.Acceleration, ref entity.Velocity, deltaTime);
-        });
+            UpdateVelocity(entity.Acceleration, ref entity.Velocity, deltaTime));
     }
 }

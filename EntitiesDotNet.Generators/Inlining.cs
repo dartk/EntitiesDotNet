@@ -242,8 +242,14 @@ internal class SupportsInliningAttribute : Attribute
 
     private static string GetLambdaBody(LambdaExpressionSyntax lambda)
     {
-        var body = lambda.ChildNodes().OfType<BlockSyntax>().First();
-        return body.ToString();
+        var body = lambda.ChildNodes().Last(x => x is BlockSyntax or ExpressionSyntax);
+        var bodyText = body.ToString();
+        if (body is ExpressionSyntax)
+        {
+            bodyText += ";";
+        }
+
+        return bodyText;
     }
 
 
