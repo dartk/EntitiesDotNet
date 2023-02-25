@@ -5,9 +5,9 @@ using Xunit.Abstractions;
 namespace EntityComponentSystem.Tests.Inlining;
 
 
-public partial class InliningTests
+public partial class IterationTests
 {
-    public InliningTests(ITestOutputHelper output)
+    public IterationTests(ITestOutputHelper output)
     {
         this.Output = output;
     }
@@ -17,19 +17,41 @@ public partial class InliningTests
 
 
     [Fact]
-    public void Test()
+    public void EntityArraysForEach()
     {
-        var em = new EntityManager();
-        for (var i = 0; i < 10; ++i)
-        {
-            em.CreateEntity(Archetype<string, double>.Instance);
-        }
+        var em = CreateEntityManager();
 
-        em.Entities.ForEach((ref double d, int index) => d = index);
-
-        InlinedMethods.ForEachArrays_Inlined(em.Entities);
+        em.Entities.ForEach((in EntityId entityId, ref int i) => i = entityId.Id);
+        em.Entities.ForEach((in int i, ref double d) => d = i);
 
         this.Output.WriteLine(em.ToReadableString());
+
+        {
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int>.Instance));
+            Assert.Equal(5, count);
+            Assert.Equal(new[] { 0, 2, 4, 6, 8 }, ints.ToArray());
+        }
+
+        {
+            var (count, ints, doubles) =
+                Read<int, double>.From(em.GetArray(Archetype<int, double>.Instance));
+            Assert.Equal(5, count);
+            Assert.Equal(new[] { 1, 3, 5, 7, 9 }, ints.ToArray());
+            Assert.Equal(new double [] { 1, 3, 5, 7, 9 }, doubles.ToArray());
+        }
+    }
+
+
+    private static EntityManager CreateEntityManager()
+    {
+        var em = new EntityManager();
+        for (var i = 0; i < 5; ++i)
+        {
+            em.CreateEntity(Archetype<int>.Instance);
+            em.CreateEntity(Archetype<int, double>.Instance);
+        }
+
+        return em;
     }
 }
 

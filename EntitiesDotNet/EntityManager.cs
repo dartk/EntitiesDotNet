@@ -45,7 +45,7 @@ public partial class EntityManager : IHasVersion
             this.IncreaseVersion();
         }
 
-        array.Add(new EntityId(entityInfo.Index, entityInfo.Version));
+        array.Add(new EntityId(entityId, entityInfo.Version));
         return new Entity(this, new EntityId(entityId, entityInfo.Version));
     }
 
