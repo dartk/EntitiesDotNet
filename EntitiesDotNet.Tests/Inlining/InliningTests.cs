@@ -27,7 +27,7 @@ public partial class InliningTests
 
         em.Entities.ForEach((ref double d, int index) => d = index);
 
-        InlinedMethods.ForEachArrays(em.Entities);
+        InlinedMethods.ForEachArrays_Inlined(em.Entities);
 
         this.Output.WriteLine(em.ToReadableString());
     }

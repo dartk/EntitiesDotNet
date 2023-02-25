@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using CSharp.SourceGen.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -243,13 +244,23 @@ internal class SupportsInliningAttribute : Attribute
     private static string GetLambdaBody(LambdaExpressionSyntax lambda)
     {
         var body = lambda.ChildNodes().Last(x => x is BlockSyntax or ExpressionSyntax);
-        var bodyText = body.ToString();
-        if (body is ExpressionSyntax)
+        switch (body)
         {
-            bodyText += ";";
-        }
+            case BlockSyntax block:
+                var returnStatements = block
+                    .DescendantNodes(static node => node is not InvocationExpressionSyntax)
+                    .OfType<ReturnStatementSyntax>();
 
-        return bodyText;
+                var continueStatement = SyntaxFactory.ContinueStatement();
+                var newBlock = block.ReplaceNodes(returnStatements,
+                    (_, _) => continueStatement);
+                
+                return newBlock.ToString();
+            case ExpressionSyntax expression:
+                return expression + ";";
+            default:
+                throw new UnreachableException();
+        }
     }
 
 
