@@ -423,7 +423,19 @@ internal static class Inline
 
         writer.Write(symbol.ReturnType);
         writer.Write(" ");
-        writer.Write(inlinedName ?? symbol.Name + "_Inlined");
+
+        if (inlinedName == null)
+        {
+            if (symbol.Name[0] == '_')
+            {
+                inlinedName = symbol.Name.TrimStart('_');
+            }
+            else
+            {
+                inlinedName = symbol.Name + "_Inlined";
+            }
+        }
+        writer.Write(inlinedName);
 
         var typeParameterList = methodSyntax.ChildNodes().OfType<TypeParameterListSyntax>()
             .FirstOrDefault();
