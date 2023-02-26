@@ -1,5 +1,4 @@
 {{- include '_Global.scriban' -}}
-using CSharp.SourceGen.Inlining;
 using {{ root_namespace }}.Delegates;
 
 

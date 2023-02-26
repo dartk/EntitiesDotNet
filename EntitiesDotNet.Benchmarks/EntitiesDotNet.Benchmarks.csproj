@@ -14,8 +14,6 @@
 
     <ItemGroup>
         <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
-<!--        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha10" PrivateAssets="all" />-->
-<!--        <ProjectReference Include="..\..\csharp-sourcegen-inlining\CSharp.SourceGen.Inlining\CSharp.SourceGen.Inlining.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />-->
     </ItemGroup>
 
     <ItemGroup>

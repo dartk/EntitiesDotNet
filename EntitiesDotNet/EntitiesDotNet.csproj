@@ -27,7 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dartk.CSharp.SourceGen.Inlining" Version="0.1.0-alpha10" PrivateAssets="all" />
         <PackageReference Include="System.Memory" Version="4.5.5" />
         <PackageReference Include="Dartk.CSharp.SourceGen.Scriban" Version="0.3.0" PrivateAssets="all" />
     </ItemGroup>

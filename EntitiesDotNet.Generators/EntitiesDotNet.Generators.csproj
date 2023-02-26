@@ -26,24 +26,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Remove="Runtime/*.cs" />
-        <None Include="RuntimeAttributes/*.cs" PackagePath="ContentFiles/cs/any/EntitiesDotNet" Pack="true" />
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Dartk.CSharp.SourceGen.Extensions" Version="0.1.0-alpha18" PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" PrivateAssets="all" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" GeneratePathProperty="true" PrivateAssets="all" />
         <PackageReference Include="Scriban" Version="5.5.0" GeneratePathProperty="true" PrivateAssets="all" />
-        <PackageReference Include="YamlDotNet" Version="12.3.1" GeneratePathProperty="true" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
         <!-- Package the generator in the analyzer directory of the nuget package -->
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
         <None Include="$(PKGScriban)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-        <None Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-        <None Include="$(PKGYamlDotNet)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
 
     <ItemGroup>
@@ -51,9 +42,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Templates\*" />
-        <None Remove="Scriban\EntityRefStruct.scriban" />
-        <EmbeddedResource Include="Scriban\EntityRefStruct.scriban" />
+        <EmbeddedResource Include="Scriban\*" />
     </ItemGroup>
 
     <PropertyGroup>
@@ -63,8 +52,6 @@
     <Target Name="GetDependencyTargetPaths">
         <ItemGroup>
             <TargetPathWithTargetPlatformMoniker Include="$(PKGScriban)\lib\netstandard2.0\Scriban.dll" IncludeRuntimeDependency="false" />
-            <TargetPathWithTargetPlatformMoniker Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\Newtonsoft.Json.dll" IncludeRuntimeDependency="false" />
-            <TargetPathWithTargetPlatformMoniker Include="$(PKGYamlDotNet)\lib\netstandard2.0\YamlDotNet.dll" IncludeRuntimeDependency="false" />
         </ItemGroup>
     </Target>
 

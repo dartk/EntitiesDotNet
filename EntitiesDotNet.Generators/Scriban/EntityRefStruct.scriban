@@ -24,7 +24,7 @@ end
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using CSharp.SourceGen.Inlining;
+using EntitiesDotNet;
 
 {{ namespace_open }}
 

@@ -101,15 +101,6 @@ internal static class Inline
     }
 
 }
-
-
-[AttributeUsage(AttributeTargets.Method)]
-internal class SupportsInliningAttribute : Attribute
-{
-    public SupportsInliningAttribute(string template)
-    {
-    }
-}
 """);
     }
 
