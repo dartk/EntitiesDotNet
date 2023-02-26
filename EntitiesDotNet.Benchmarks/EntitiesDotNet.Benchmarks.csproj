@@ -27,10 +27,6 @@
         </None>
     </ItemGroup>
 
-    <ItemGroup>
-        <Compile Include="..\EntitiesDotNet.Generators\RuntimeAttributes\*.cs" />
-    </ItemGroup>
-
 <!--    <PropertyGroup>-->
 <!--        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>-->
 <!--        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>-->

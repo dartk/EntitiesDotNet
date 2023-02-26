@@ -20,7 +20,6 @@ public class UpdateTranslationBenchmark
     public void GlobalSetup()
     {
         this._entityManager = new EntityManager();
-        this._foreachGeneratedSystem = new ForEachGeneratedSystem(this.Entities);
         this._enttSystem = new EnttSystem(this.N);
         this._nativeArrays = Native.arrays_new(2 * this.N);
 
@@ -113,14 +112,6 @@ public class UpdateTranslationBenchmark
 
 
     [Benchmark]
-    public void ForEach_Generated()
-    {
-        this._foreachGeneratedSystem.DeltaTime = DeltaTime;
-        this._foreachGeneratedSystem.Execute();
-    }
-
-
-    [Benchmark]
     public void ForEach_Inlined()
     {
         ForEachSystem.Execute_Inlined(this.Entities, DeltaTime);
@@ -156,7 +147,6 @@ public class UpdateTranslationBenchmark
 
 
     private EntityManager _entityManager;
-    private ForEachGeneratedSystem _foreachGeneratedSystem;
     private EnttSystem _enttSystem;
     private nint _nativeArrays;
     private EntityArrays Entities => this._entityManager.Entities;
