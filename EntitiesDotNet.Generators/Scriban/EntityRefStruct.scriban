@@ -128,7 +128,6 @@ public static partial class EntityRefForEachExtensions
     
     [SupportsInlining("""
         var __index = 0;
-        var {action.arg1} = 0;
         {{ full_name }} {{ $entity }} = default;
         foreach (var __array in @this) {
             var (__count, {{ all_components | array.each @(do; ret "__" + $0.name + "Span"; end) | array.join ", " }}) = {{ select_str }}.From(__array);
