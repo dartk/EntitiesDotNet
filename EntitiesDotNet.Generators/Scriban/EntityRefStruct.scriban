@@ -96,17 +96,15 @@ public static partial class EntityRefForEachExtensions
             {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
             {{- end }}
             
-            for (var __i = 0;;)
+            for (var __i = 0; __i < 1; ++__i)
             {
         #region Inlined lambda
                 {action.body}
         #endregion
-                
-                if (++__i == __count)
-                {
-                    break;
-                }
-                
+            }
+            
+            for (var __i = 1; __i < __count; ++__i)
+            {
                 {{- for $i in 0..($count - 1) }}
                 __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1);
                 {{- end }}
@@ -114,6 +112,10 @@ public static partial class EntityRefForEachExtensions
                 {{- for $i in 0..($count - 1) }}
                 {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
                 {{- end }}
+                
+        #region Inlined lambda
+                {action.body}
+        #endregion
             }
         }
         """)]
@@ -142,18 +144,17 @@ public static partial class EntityRefForEachExtensions
             {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
             {{- end }}
             
-            for (var __i = 0;;)
+            for (var __i = 0; __i < 1; ++__i)
             {
                 var {action.arg1} = __index++;
-                
         #region Inlined lambda
                 {action.body}
         #endregion
-                
-                if (++__i == __count)
-                {
-                    break;
-                }
+            }
+            
+            for (var __i = 1; __i < __count; ++__i)
+            {
+                var {action.arg1} = __index++;
                 
                 {{- for $i in 0..($count - 1) }}
                 __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1);
@@ -162,6 +163,10 @@ public static partial class EntityRefForEachExtensions
                 {{- for $i in 0..($count - 1) }}
                 {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
                 {{- end }}
+                
+        #region Inlined lambda
+                {action.body}
+        #endregion
             }
         }
         """)]

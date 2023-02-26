@@ -29,6 +29,8 @@ public partial class IterationTests
     }
 
 
+    #region ForEach
+
     [Fact]
     public void EntityArraysForEach()
     {
@@ -73,8 +75,10 @@ public partial class IterationTests
         }
     }
 
+    #endregion
 
-    #region EntityRef.ForEach
+
+    #region ForEach EntityRef
 
     [EntityRef]
     public ref partial struct EInt
