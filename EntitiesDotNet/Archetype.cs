@@ -1,38 +1,60 @@
-﻿namespace EntitiesDotNet;
+﻿using System.Reflection;
+
+
+namespace EntitiesDotNet;
 
 
 public partial class Archetype
 {
-
-
     #region Public
-
 
     public static Archetype Instance() => Empty;
 
 
-    public static Archetype Instance(params ComponentType[] components)
-    {
-        return Instance(components.AsEnumerable(), null);
-    }
+    public static Archetype Instance(params ComponentType[] components) =>
+        Instance(components.AsEnumerable());
 
 
-    public static Archetype Instance(
-        IEnumerable<ComponentType> components,
-        IEnumerable<ISharedComponent>? sharedComponents
-    )
+    public static Archetype Instance(IEnumerable<ComponentType> components)
     {
-        var newArchetype = new Archetype(components, sharedComponents);
+        var componentsArray = components.Append(ComponentType<EntityId>.Instance)
+            .Distinct().ToArray();
+        Array.Sort(componentsArray);
+
         lock (Archetypes)
         {
-            var index = Archetypes.BinarySearch(newArchetype, ArchetypeComparer.Instance);
-            if (index >= 0)
+            if (Archetypes.TryGetValue(componentsArray, out var existingArchetype))
             {
-                return Archetypes[index];
+                return existingArchetype;
             }
 
-            Archetypes.Add(newArchetype);
-            Archetypes.Sort(ArchetypeComparer.Instance);
+            Archetype newArchetype;
+            switch (componentsArray.Length)
+            {
+                case 0:
+                    newArchetype = Empty;
+                    break;
+                case < 8:
+                {
+                    var assembly = typeof(Archetype).Assembly;
+                    var typeName = $"EntitiesDotNet.Archetype`{componentsArray.Length}";
+                    var type = assembly.GetType(typeName);
+                    var constructedArchetypeType =
+                        type!.MakeGenericType(componentsArray.Select(x => x.Type).ToArray());
+
+                    var constructor = constructedArchetypeType.GetConstructor(
+                        BindingFlags.Instance | BindingFlags.NonPublic, null,
+                        new[] { typeof(ComponentType[]) }, null)!;
+
+                    newArchetype = (Archetype)constructor.Invoke(new object[] { componentsArray });
+                    break;
+                }
+                default:
+                    newArchetype = new Archetype(componentsArray);
+                    break;
+            }
+
+            Archetypes.Add(componentsArray, newArchetype);
 
             return newArchetype;
         }
@@ -41,51 +63,32 @@ public partial class Archetype
 
     static Archetype()
     {
-        Archetypes = new List<Archetype>();
-        Empty = Instance(Array.Empty<ComponentType>(), null);
+        Empty = new EmptyArchetype();
+        Archetypes = new SortedList<ComponentType[], Archetype>(ComponentTypesComparer.Instance)
+        {
+            { Array.Empty<ComponentType>(), Empty }
+        };
     }
 
 
     public static readonly Archetype Empty;
 
 
-    private static readonly List<Archetype> Archetypes;
+    private static readonly SortedList<ComponentType[], Archetype> Archetypes;
 
 
-    private Archetype(
-        IEnumerable<ComponentType> components,
-        IEnumerable<ISharedComponent>? sharedComponents
-    )
+    protected Archetype(ComponentType[] components)
     {
-        var componentsArray = components.Append(ComponentType<EntityId>.Instance)
-            .Distinct().ToArray();
-
-        var sharedComponentsArray =
-            sharedComponents?.Distinct().ToArray()
-            ?? Array.Empty<ISharedComponent>();
-
-        Array.Sort(componentsArray);
-        Array.Sort(sharedComponentsArray, SharedComponentComparer.Instance);
-
-        this._components = componentsArray;
-        this._sharedComponents = sharedComponentsArray;
+        this._components = components;
     }
 
 
     public ReadOnlySpan<ComponentType> Components => this._components;
-    public ReadOnlySpan<ISharedComponent> SharedComponents => this._sharedComponents;
 
 
     public bool Contains(ComponentType component)
     {
         return this.GetIndex(component) >= 0;
-    }
-
-
-    public bool Contains(ISharedComponent sharedComponent)
-    {
-        return Array.BinarySearch(this._sharedComponents, sharedComponent,
-            SharedComponentComparer.Instance) >= 0;
     }
 
 
@@ -99,44 +102,38 @@ public partial class Archetype
             }
         }
 
-        foreach (var sharedComponent in archetype.SharedComponents)
-        {
-            if (!this.Contains(sharedComponent))
-            {
-                return false;
-            }
-        }
-
         return true;
     }
 
 
-    public Archetype With(IEnumerable<ComponentType> components)
+    public virtual bool Contains<T>() => this.GetIndex(ComponentType<T>.Instance) >= 0;
+
+
+    public virtual Archetype Add<T>() =>
+        this.Contains<T>()
+            ? this
+            : Instance(this._components.Append(ComponentType<T>.Instance));
+
+
+    public virtual Archetype Remove<T>() =>
+        this.Contains<T>()
+            ? Instance(this._components.Where(x => x != ComponentType<T>.Instance))
+            : this;
+
+
+    public Archetype Add(IEnumerable<ComponentType> components)
     {
-        return Instance(this._components.Concat(components), this._sharedComponents);
+        return Instance(this._components.Concat(components));
     }
 
 
-    public Archetype With(params ComponentType[] components)
+    public Archetype Add(params ComponentType[] components)
     {
-        return this.With(components.AsEnumerable());
+        return this.Add(components.AsEnumerable());
     }
 
 
-    public Archetype With(IEnumerable<ISharedComponent> sharedComponents)
-    {
-        return Instance(this._components,
-            this._sharedComponents.Concat(sharedComponents));
-    }
-
-
-    public Archetype With(params ISharedComponent[] sharedComponents)
-    {
-        return this.With(sharedComponents.AsEnumerable());
-    }
-
-
-    public Archetype Without(params ComponentType[] components)
+    public Archetype Remove(params ComponentType[] components)
     {
         var newComponents = new List<ComponentType>(this._components.Length);
 
@@ -152,28 +149,7 @@ public partial class Archetype
             }
         }
 
-        return Instance(newComponents, this._sharedComponents);
-    }
-
-
-    public Archetype Without(params ISharedComponent[] sharedComponents)
-    {
-        var newSharedComponents =
-            new List<ISharedComponent>(this._sharedComponents.Length);
-
-        Array.Sort(sharedComponents, SharedComponentComparer.Instance);
-
-        foreach (var sharedComponent in this._sharedComponents)
-        {
-            if (Array.BinarySearch(sharedComponents, sharedComponent,
-                    SharedComponentComparer.Instance) < 0
-            )
-            {
-                newSharedComponents.Add(sharedComponent);
-            }
-        }
-
-        return Instance(this._components, newSharedComponents);
+        return Instance(newComponents);
     }
 
 
@@ -189,79 +165,29 @@ public partial class Archetype
     public override string ToString()
     {
         var components = string.Join(", ", this._components.Select(x => x.Type.Name));
-        var sharedComponents =
-            string.Join<ISharedComponent>(", ", this._sharedComponents);
-
-        var allComponents = string.Join(", ",
-            new[] { components, sharedComponents }.Where(x => !string.IsNullOrEmpty(x)));
-
-        return $"Archetype {{ {allComponents} }}";
+        return $"Archetype {{ {components} }}";
     }
-
 
     #endregion
 
 
     #region Private
 
-
     private readonly ComponentType[] _components;
-    private readonly ISharedComponent[] _sharedComponents;
 
 
-    private class SharedComponentComparer : IComparer<ISharedComponent>
+    private class ComponentTypesComparer : IComparer<ComponentType[]>
     {
-
         // ReSharper disable once MemberHidesStaticFromOuterClass
-        public static readonly SharedComponentComparer Instance = new();
+        public static readonly ComponentTypesComparer Instance = new();
 
 
-        private SharedComponentComparer()
+        private ComponentTypesComparer()
         {
         }
 
 
-        public int Compare(ISharedComponent x, ISharedComponent y)
-        {
-            if (ReferenceEquals(x, y)) return 0;
-            if (ReferenceEquals(null, y)) return 1;
-            if (ReferenceEquals(null, x)) return -1;
-
-            return x.Id.CompareTo(y.Id);
-        }
-
-    }
-
-
-    private class ArchetypeComparer : IComparer<Archetype>
-    {
-
-        // ReSharper disable once MemberHidesStaticFromOuterClass
-        public static readonly ArchetypeComparer Instance = new();
-
-
-        private ArchetypeComparer()
-        {
-        }
-
-
-        public int Compare(Archetype archetypeX, Archetype archetypeY)
-        {
-            return CompareComponents(archetypeX.Components, archetypeY.Components)
-                switch
-            {
-                0 => CompareSharedComponents(
-                    archetypeX.SharedComponents,
-                    archetypeY.SharedComponents),
-                var result => result
-            };
-        }
-
-
-        private static int CompareComponents(
-            ReadOnlySpan<ComponentType> componentsX,
-            ReadOnlySpan<ComponentType> componentsY
-        )
+        public int Compare(ComponentType[] componentsX, ComponentType[] componentsY)
         {
             if (componentsX.Length < componentsY.Length)
             {
@@ -286,40 +212,7 @@ public partial class Archetype
 
             return 0;
         }
-
-
-        private static int CompareSharedComponents(
-            ReadOnlySpan<ISharedComponent> componentsX,
-            ReadOnlySpan<ISharedComponent> componentsY
-        )
-        {
-            if (componentsX.Length < componentsY.Length)
-            {
-                return -1;
-            }
-            else if (componentsX.Length > componentsY.Length)
-            {
-                return 1;
-            }
-
-            var length = componentsX.Length;
-            for (var i = 0; i < length; ++i)
-            {
-                var x = componentsX[i];
-                var y = componentsY[i];
-                var result = SharedComponentComparer.Instance.Compare(x, y);
-                if (result != 0)
-                {
-                    return result;
-                }
-            }
-
-            return 0;
-        }
     }
 
-
     #endregion
-
-
 }

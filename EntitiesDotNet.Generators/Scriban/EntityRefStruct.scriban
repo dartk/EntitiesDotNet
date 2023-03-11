@@ -283,7 +283,7 @@ public static partial class EntityRefForEachExtensions
     public static {{ name }}.ArrayEnumerable From(IEnumerable<IComponentArray> arrayEnumerable) => new (arrayEnumerable);
     
     
-    public static Archetype Archetype => Archetype<{{ all_components | array.map "type" | array.join ", " }}>.Instance;
+    public static Archetype Archetype => Archetype.Instance<{{ all_components | array.map "type" | array.join ", " }}>();
 
 
     public static class Delegates

@@ -11,7 +11,7 @@ public partial class InliningReturnStatementTest
         var em = new EntityManager();
         for (var i = 0; i < 5; ++i)
         {
-            em.CreateEntity(Archetype<int>.Instance);
+            em.CreateEntity(Archetype.Instance<int>());
         }
 
         return em;

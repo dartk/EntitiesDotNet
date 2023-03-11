@@ -31,13 +31,13 @@ public class UpdateTranslationBenchmark
             random.NextSingle());
 
         SetRandomTranslation(SetRandomVelocity(
-            CreateEntities(Archetype<Translation, Velocity>.Instance)));
+            CreateEntities(Archetype.Instance<Translation, Velocity>())));
 
         SetRandomVelocity(SetRandomAcceleration(
-            CreateEntities(Archetype<Velocity, Acceleration>.Instance)));
+            CreateEntities(Archetype.Instance<Velocity, Acceleration>())));
 
         SetRandomTranslation(SetRandomVelocity(SetRandomAcceleration(
-            CreateEntities(Archetype<Translation, Velocity, Acceleration>.Instance))));
+            CreateEntities(Archetype.Instance<Translation, Velocity, Acceleration>()))));
 
 
         return;

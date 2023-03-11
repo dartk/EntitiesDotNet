@@ -21,8 +21,8 @@ public partial class IterationTests
         var em = new EntityManager();
         for (var i = 0; i < 5; ++i)
         {
-            em.CreateEntity(Archetype<int>.Instance);
-            em.CreateEntity(Archetype<int, double>.Instance);
+            em.CreateEntity(Archetype.Instance<int>());
+            em.CreateEntity(Archetype.Instance<int, double>());
         }
 
         return em;
@@ -40,14 +40,14 @@ public partial class IterationTests
         em.Entities.ForEach((in int i, ref double d) => d = i);
 
         {
-            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int>.Instance));
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 0, 2, 4, 6, 8 }, ints.ToArray());
         }
 
         {
             var (count, ints, doubles) =
-                Read<int, double>.From(em.GetArray(Archetype<int, double>.Instance));
+                Read<int, double>.From(em.GetArray(Archetype.Instance<int, double>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 1, 3, 5, 7, 9 }, ints.ToArray());
             Assert.Equal(new double[] { 1, 3, 5, 7, 9 }, doubles.ToArray());
@@ -63,13 +63,13 @@ public partial class IterationTests
         em.Entities.ForEach((ref int i, int index) => i = index);
 
         {
-            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int>.Instance));
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 0, 1, 2, 3, 4 }, ints.ToArray());
         }
 
         {
-            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int, double>.Instance));
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int, double>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 5, 6, 7, 8, 9 }, ints.ToArray());
         }
@@ -111,14 +111,14 @@ public partial class IterationTests
         EntityRefForEachSystem(em.Entities);
 
         {
-            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int>.Instance));
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 0, 2, 4, 6, 8 }, ints.ToArray());
         }
 
         {
             var (count, ints, doubles) =
-                Read<int, double>.From(em.GetArray(Archetype<int, double>.Instance));
+                Read<int, double>.From(em.GetArray(Archetype.Instance<int, double>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 1, 3, 5, 7, 9 }, ints.ToArray());
             Assert.Equal(new double[] { 1, 3, 5, 7, 9 }, doubles.ToArray());
@@ -134,14 +134,14 @@ public partial class IterationTests
         EntityRefForEachSystem_Inlined(em.Entities);
 
         {
-            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int>.Instance));
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 0, 2, 4, 6, 8 }, ints.ToArray());
         }
 
         {
             var (count, ints, doubles) =
-                Read<int, double>.From(em.GetArray(Archetype<int, double>.Instance));
+                Read<int, double>.From(em.GetArray(Archetype.Instance<int, double>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 1, 3, 5, 7, 9 }, ints.ToArray());
             Assert.Equal(new double[] { 1, 3, 5, 7, 9 }, doubles.ToArray());
@@ -165,14 +165,14 @@ public partial class IterationTests
         EntityRefForEachWithIndexSystem(em.Entities);
 
         {
-            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int>.Instance));
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 0, 1, 2, 3, 4 }, ints.ToArray());
         }
 
         {
             var (count, ints, doubles) =
-                Read<int, double>.From(em.GetArray(Archetype<int, double>.Instance));
+                Read<int, double>.From(em.GetArray(Archetype.Instance<int, double>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 5, 6, 7, 8, 9 }, ints.ToArray());
             Assert.Equal(new double[] { 0, 1, 2, 3, 4 }, doubles.ToArray());
@@ -188,14 +188,14 @@ public partial class IterationTests
         EntityRefForEachWithIndexSystem_Inlined(em.Entities);
 
         {
-            var (count, ints) = Read<int>.From(em.GetArray(Archetype<int>.Instance));
+            var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 0, 1, 2, 3, 4 }, ints.ToArray());
         }
 
         {
             var (count, ints, doubles) =
-                Read<int, double>.From(em.GetArray(Archetype<int, double>.Instance));
+                Read<int, double>.From(em.GetArray(Archetype.Instance<int, double>()));
             Assert.Equal(5, count);
             Assert.Equal(new[] { 5, 6, 7, 8, 9 }, ints.ToArray());
             Assert.Equal(new double[] { 0, 1, 2, 3, 4 }, doubles.ToArray());

@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Numerics;
 using EntitiesDotNet;
 using Xunit.Abstractions;
 
@@ -94,7 +93,7 @@ public class ComponentArrayTests
     [Fact]
     public void FillArrayUsingQueryForEach()
     {
-        var array = new ComponentArray(Archetype<Width, Height>.Instance);
+        var array = new ComponentArray(Archetype.Instance<Width, Height>());
         array.Add(5);
         Assert.Equal(5, array.Count);
 
@@ -119,7 +118,7 @@ public class ComponentArrayTests
     [Fact]
     public void FillArrayUsingQueryIndex()
     {
-        var array = new EntitiesDotNet.ComponentArray(Archetype<Width, Height>.Instance);
+        var array = new EntitiesDotNet.ComponentArray(Archetype.Instance<Width, Height>());
         array.Add(5);
         Assert.Equal(5, array.Count);
 
@@ -144,7 +143,7 @@ public class ComponentArrayTests
     [Fact]
     public void FillArrayUsingForEach()
     {
-        var array = new EntitiesDotNet.ComponentArray(Archetype<Width, Height>.Instance);
+        var array = new EntitiesDotNet.ComponentArray(Archetype.Instance<Width, Height>());
         array.Add(5);
         Assert.Equal(5, array.Count);
 

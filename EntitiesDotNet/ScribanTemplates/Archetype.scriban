@@ -6,69 +6,90 @@ namespace {{ root_namespace }};
 {{- last_index = count - 1 }}
 
 
-public static class Archetype<{{ type_parameters_str count }}> {
-    
-    public static readonly Archetype Instance = Archetype.Instance(
+internal class Archetype<{{ type_parameters_str count }}> : Archetype
+{
+    public new static readonly Archetype Instance = Archetype.Instance(
         {{- for i in 0..last_index }}
         ComponentType<T{{ i }}>.Instance
         {{- if i < last_index; ","; end }}
         {{- end }}
     );
     
+    
+    private Archetype(ComponentType[] components) : base(components)
+    {
+    }
+    
+    {{~ if count < type_parameters_count }}
+    public override Archetype Add<T>()
+    {
+        var index = this.GetIndex<T>();
+        if (index >= 0) return this;
+        
+        return Archetype<{{ type_parameters_str count }}, T>.Instance;
+    }
+    {{- end }}
+    
+    {{~ if count > 1 }}
+    public override Archetype Remove<T>()
+    {
+        var index = this.GetIndex<T>();
+        if (index < 0) return this;
+
+        return index switch
+        {
+            {{- for i in 0..last_index }}
+            {{- indices = 0..last_index | array.remove_at i }}
+            {{ i }} => Archetype<{{
+                indices |
+                array.each @(do; ret "T" + $0; end) |
+                array.join ","
+            }}>.Instance,
+            {{- end }}
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+    {{- else }}
+    public override Archetype Remove<T>() => typeof(T) == typeof(T0) ? Archetype.Empty : this;
+    {{- end }}
 }
 {{- end }}
 
 
 public partial class Archetype {
-
 {{- for count in 1..type_parameters_count }}
-{{- last_index = count - 1 }}
+
 
     public static Archetype Instance<{{ type_parameters_str count }}>() =>
         Archetype<{{ type_parameters_str count }}>.Instance;
         
         
-    public Archetype With<{{ type_parameters_str count }}>() => this.With(
-            {{- for i in 0..last_index }}
-            ComponentType<T{{ i }}>.Instance
-            {{- if i < last_index; ","; end }}
-            {{- end }}
-        );
+{{- end }}
+
+
+{{- for count in 2..type_parameters_count }}
+{{- last_index = count - 1 }}
         
         
-    public Archetype Without<{{ type_parameters_str count }}>() => this.Without(
-            {{- for i in 0..last_index }}
-            ComponentType<T{{ i }}>.Instance
-            {{- if i < last_index; ","; end }}
-            {{- end }}
-        );
+    public Archetype Add<{{ type_parameters_str count }}>() => this
+        {{- for i in 0..last_index }}
+        .Add<T{{ i }}>()
+        {{- end -}}
+        ;
         
-    
-    public Archetype WithShared<
-        {{-
-            array_create 0 count |
-            array_map @(do; ret "T" + $0; end) |
-            array.join ", "
-        -}}
-    >(
-        {{-
-            array_create 0 count |
-                array_map @(do; ret string_format "T{0} sharedComponent{0}" $0; end) |
-                array.join ", "
-        -}}
-    ) => this.With(
-        {{-
-            array_create 0 count |
-                array_map @(do; ret string_format "SharedComponent.Instance(sharedComponent{0})" $0; end) |
-                array.join ", "
-        -}}
-    );
+        
+    public Archetype Remove<{{ type_parameters_str count }}>() => this
+        {{- for i in 0..last_index }}
+        .Remove<T{{ i }}>()
+        {{- end -}}
+        ;
         
         
     public bool Contains<{{ type_parameters_str count }}>() =>
         {{- for i in 0..last_index }}
-        {{ if i > 0; "&& "; end }}this.Contains(ComponentType<T{{ i }}>.Instance)
-        {{- end }};
+        {{ if i > 0; "&& "; end }}this.Contains<T{{ i }}>()
+        {{- end -}}
+        ;
     
 {{- end }}
 
