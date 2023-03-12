@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
 
 
 namespace EntitiesDotNet;
@@ -6,86 +6,47 @@ namespace EntitiesDotNet;
 
 public partial class Archetype
 {
-    internal const int MaxComponentCount = 8;
-    
-    #region Public
-
-    public static Archetype Instance() => Empty;
-
-
-    public static Archetype Instance(params ComponentType[] components) =>
-        Instance(components.AsEnumerable());
-
-
-    public static Archetype Instance(IEnumerable<ComponentType> components)
-    {
-        var componentsArray = components.Append(ComponentType<EntityId>.Instance)
-            .Distinct().ToArray();
-        Array.Sort(componentsArray);
-
-        lock (Archetypes)
-        {
-            if (Archetypes.TryGetValue(componentsArray, out var existingArchetype))
-            {
-                return existingArchetype;
-            }
-
-            Archetype newArchetype;
-            switch (componentsArray.Length)
-            {
-                case 0:
-                    newArchetype = Empty;
-                    break;
-                case <= MaxComponentCount:
-                {
-                    var assembly = typeof(Archetype).Assembly;
-                    var typeName = $"EntitiesDotNet.Archetype`{componentsArray.Length}";
-                    var type = assembly.GetType(typeName);
-                    var constructedArchetypeType =
-                        type!.MakeGenericType(componentsArray.Select(x => x.Type).ToArray());
-
-                    var constructor = constructedArchetypeType.GetConstructor(
-                        BindingFlags.Instance | BindingFlags.NonPublic, null,
-                        new[] { typeof(ComponentType[]) }, null)!;
-
-                    newArchetype = (Archetype)constructor.Invoke(new object[] { componentsArray });
-                    break;
-                }
-                default:
-                    newArchetype = new Archetype(componentsArray);
-                    break;
-            }
-
-            Archetypes.Add(componentsArray, newArchetype);
-
-            return newArchetype;
-        }
-    }
-
+    #region Static
 
     static Archetype()
     {
-        Empty = new EmptyArchetype();
-        Archetypes = new SortedList<ComponentType[], Archetype>(ComponentTypesComparer.Instance)
-        {
-            { Array.Empty<ComponentType>(), Empty }
-        };
+        ArchetypePool = new ArchetypePoolClass();
+        Empty = ArchetypePool.Get(new ComponentTypeSet());
     }
 
 
     public static readonly Archetype Empty;
+    public static Archetype Instance() => Empty;
 
 
-    private static readonly SortedList<ComponentType[], Archetype> Archetypes;
-
-
-    protected Archetype(ComponentType[] components)
+    public static Archetype Instance(ComponentTypeSet id)
     {
-        this._components = components;
+        lock (Locker)
+        {
+            return ArchetypePool.Get(id);
+        }
     }
 
 
-    public ReadOnlySpan<ComponentType> Components => this._components;
+    private static readonly object Locker = new();
+    private static readonly ArchetypePoolClass ArchetypePool;
+
+    #endregion
+
+
+    #region Public
+
+    protected Archetype(ComponentTypeSet components)
+    {
+        this.ComponentTypeSet = components;
+        this._components = components.ToImmutableArray();
+    }
+
+
+    public ComponentTypeSet ComponentTypeSet { get; }
+
+
+    public ReadOnlySpan<ComponentType> Components => this._components.AsSpan();
 
 
     public bool Contains(ComponentType component)
@@ -94,70 +55,33 @@ public partial class Archetype
     }
 
 
-    public bool Contains(Archetype archetype)
+    public bool Contains(ComponentTypeSet components)
     {
-        foreach (var component in archetype.Components)
-        {
-            if (!this.Contains(component))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return this.ComponentTypeSet.Contains(components);
     }
 
 
-    public virtual bool Contains<T>() => this.GetIndex(ComponentType<T>.Instance) >= 0;
-
-
-    public virtual Archetype Add<T>() =>
-        this.Contains<T>()
+    public Archetype Add(ComponentTypeSet components)
+    {
+        var newComponentTypeSet = this.ComponentTypeSet.Add(components);
+        return newComponentTypeSet == this.ComponentTypeSet
             ? this
-            : Instance(this._components.Append(ComponentType<T>.Instance));
-
-
-    public virtual Archetype Remove<T>() =>
-        this.Contains<T>()
-            ? Instance(this._components.Where(x => x != ComponentType<T>.Instance))
-            : this;
-
-
-    public Archetype Add(IEnumerable<ComponentType> components)
-    {
-        return Instance(this._components.Concat(components));
+            : Instance(newComponentTypeSet);
     }
 
 
-    public Archetype Add(params ComponentType[] components)
+    public Archetype Remove(ComponentTypeSet components)
     {
-        return this.Add(components.AsEnumerable());
-    }
-
-
-    public Archetype Remove(params ComponentType[] components)
-    {
-        var newComponents = new List<ComponentType>(this._components.Length);
-
-        Array.Sort(components);
-
-        foreach (var component in this._components)
-        {
-            if (
-                Array.BinarySearch(components, component) < 0
-            )
-            {
-                newComponents.Add(component);
-            }
-        }
-
-        return Instance(newComponents);
+        var newComponentTypeSet = this.ComponentTypeSet.Remove(components);
+        return newComponentTypeSet == this.ComponentTypeSet
+            ? this
+            : Instance(newComponentTypeSet);
     }
 
 
     public int GetIndex(ComponentType component)
     {
-        return Array.BinarySearch(this._components, component);
+        return this._components.BinarySearch(component);
     }
 
 
@@ -175,46 +99,27 @@ public partial class Archetype
 
     #region Private
 
-    private readonly ComponentType[] _components;
-
-
-    private class ComponentTypesComparer : IComparer<ComponentType[]>
-    {
-        // ReSharper disable once MemberHidesStaticFromOuterClass
-        public static readonly ComponentTypesComparer Instance = new();
-
-
-        private ComponentTypesComparer()
-        {
-        }
-
-
-        public int Compare(ComponentType[] componentsX, ComponentType[] componentsY)
-        {
-            if (componentsX.Length < componentsY.Length)
-            {
-                return -1;
-            }
-            else if (componentsX.Length > componentsY.Length)
-            {
-                return 1;
-            }
-
-            var length = componentsX.Length;
-            for (var i = 0; i < length; ++i)
-            {
-                var x = componentsX[i];
-                var y = componentsY[i];
-                var result = x.CompareTo(y);
-                if (result != 0)
-                {
-                    return result;
-                }
-            }
-
-            return 0;
-        }
-    }
+    private readonly ImmutableArray<ComponentType> _components;
 
     #endregion
+
+
+    private class ArchetypePoolClass
+    {
+        public Archetype Get(ComponentTypeSet id)
+        {
+            if (!this._archetypeById.TryGetValue(id, out var archetype))
+            {
+                this._archetypeById[id] = archetype = new Archetype(id);
+            }
+
+            return archetype;
+        }
+
+
+        private readonly Dictionary<ComponentTypeSet, Archetype> _archetypeById = new()
+        {
+            { new ComponentTypeSet(), new Archetype(new ComponentTypeSet()) }
+        };
+    }
 }

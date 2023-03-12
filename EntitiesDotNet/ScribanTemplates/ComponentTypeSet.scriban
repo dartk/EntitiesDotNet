@@ -1,0 +1,44 @@
+﻿{{- include '_Global.scriban' -}}
+namespace {{ root_namespace }}; 
+
+
+public readonly partial struct ComponentTypeSet
+{
+    {{- for last_index in 0..(type_parameters_count - 1) }}
+    
+    public static ComponentTypeSet Instance({{
+        0..last_index |
+        array.each @(do; ret "ComponentType component" + $0; end) |
+        array.join ", "
+    }})
+    {
+        lock (Locker)
+        {
+            DefaultBuilder.Clear();
+            {{- for i in 0..last_index }}
+            DefaultBuilder.Add(component{{ i }});
+            {{- end }}
+            return DefaultBuilder.ComponentTypeSet;
+        }
+    }
+    
+    {{- end }}
+}
+
+
+{{- for count in 1..type_parameters_count }}
+{{- last_index = count - 1 }}
+{{- type_params = type_parameters_str count }}
+
+
+public class ComponentTypeSet<{{ type_params }}>
+{
+    public static readonly ComponentTypeSet Instance = ComponentTypeSet.Instance({{
+        0..last_index |
+        array.each @(do; ret string_format "ComponentType<T{0}>.Instance" $0; end) |
+        array.join ", "
+    }});
+}
+
+
+{{- end }}

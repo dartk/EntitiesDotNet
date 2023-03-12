@@ -97,7 +97,33 @@ public class ResizableArray<T> : IList<T>
     }
 
 
-    public int Count => this._size;
+    public int Count
+    {
+        get => this._size;
+        set
+        {
+            if (this._size == value) return;
+            if (this._size > value)
+            {
+                Array.Clear(this._items, value, this._size);
+                this._size = value;
+            }
+            else
+            {
+                this.EnsureCapacity(value);
+                this._size = value;
+            }
+        }
+    }
+
+
+    public void EnsureCount(int count)
+    {
+        if (count > this.Count)
+        {
+            this.Count = count;
+        }
+    }
 
 
     bool ICollection<T>.IsReadOnly { get; } = false;
@@ -175,6 +201,7 @@ public class ResizableArray<T> : IList<T>
 
 
     public Span<T> AsSpan() => this._items.AsSpan(0, this._size);
+    public Memory<T> AsMemory() => this._items.AsMemory(0, this._size);
 
 
     public ReadOnlyArray<T> AsReadOnly() => this._readOnly;

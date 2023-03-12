@@ -12,6 +12,7 @@ public class ComponentType : IComparable<ComponentType>
     public readonly Type Type;
     public readonly int Id;
 
+
     public override string ToString()
     {
         return this.Type.ToString();
@@ -28,6 +29,15 @@ public class ComponentType : IComparable<ComponentType>
 
 
     public static ComponentType Instance<T>() => ComponentType<T>.Instance;
+
+
+    public static ComponentType Instance(int id)
+    {
+        lock (ComponentTypes)
+        {
+            return ComponentTypes[id];
+        }
+    }
 
 
     public static ComponentType Instance(Type type)
@@ -64,8 +74,8 @@ public class ComponentType : IComparable<ComponentType>
     }
 
 
-    private static readonly ResizableArray<ComponentType> ComponentTypes = new() {
+    private static readonly ResizableArray<ComponentType> ComponentTypes = new()
+    {
         new ComponentType(0, typeof(EntityId))
     };
-
 }
