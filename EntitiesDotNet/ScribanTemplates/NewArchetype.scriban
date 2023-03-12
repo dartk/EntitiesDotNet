@@ -1,0 +1,99 @@
+﻿{{- include '_Global.scriban' -}}
+namespace {{ root_namespace }}; 
+
+
+{{- for count in 1..type_parameters_count }}
+{{- last_index = count - 1 }}
+
+
+internal class NewArchetype<{{ type_parameters_str count }}> : IArchetype
+{
+    public int ComponentCount => {{ count }};
+    
+    
+    public int GetComponentIndex<T>() => default;
+    
+    
+    public IArchetype Add<T>()
+    {
+        var index = this.GetComponentIndex<T>();
+        if (index >= 0) return this;
+        {{- if count < type_parameters_count }}
+        return NewArchetype<{{ type_parameters_str count }}, T>.Instance;
+        {{- else }}
+        if (index < {{ last_index }})
+        {
+            return ComplexArchetype.Instance(
+                this.Remove<T{{ last_index }}>().Add<T>(),
+                NewArchetype<T{{ last_index }}>.Instance);
+        }
+        else
+        {
+            return ComplexArchetype.Instance(this, NewArchetype<T>.Instance);
+        }
+        {{- end }}
+    }
+    
+    public IArchetype RemoveAt(int index) => index switch
+    {
+        {{- for i in 0..last_index }}
+        {{- indices = 0..last_index | array.remove_at i }}
+        {{ i }} => Archetype<{{
+            indices |
+            array.each @(do; ret "T" + $0; end) |
+            array.join ","
+        }}>.Instance,
+        {{- end }}
+        _ => throw new ArgumentOutOfRangeException()
+    };
+    
+    
+    public IArchetype CopyComponentTo(IArchetype target, int componentIndex) => componentIndex switch
+    {
+        {{- for i in 0..last_index }}
+        {{ i }} => target.Add<T{{ i }}>(),
+        {{- end }}
+        _ => throw new ArgumentOutOfRangeException()
+    };
+}
+{{- end }}
+
+
+public partial class Archetype {
+{{- for count in 1..type_parameters_count }}
+
+
+    public static Archetype Instance<{{ type_parameters_str count }}>() =>
+        Archetype<{{ type_parameters_str count }}>.Instance;
+        
+        
+{{- end }}
+
+
+{{- for count in 2..type_parameters_count }}
+{{- last_index = count - 1 }}
+        
+        
+    public Archetype Add<{{ type_parameters_str count }}>() => this
+        {{- for i in 0..last_index }}
+        .Add<T{{ i }}>()
+        {{- end -}}
+        ;
+        
+        
+    public Archetype Remove<{{ type_parameters_str count }}>() => this
+        {{- for i in 0..last_index }}
+        .Remove<T{{ i }}>()
+        {{- end -}}
+        ;
+        
+        
+    public bool Contains<{{ type_parameters_str count }}>() =>
+        {{- for i in 0..last_index }}
+        {{ if i > 0; "&& "; end }}this.Contains<T{{ i }}>()
+        {{- end -}}
+        ;
+    
+{{- end }}
+
+}

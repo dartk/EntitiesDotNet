@@ -6,6 +6,8 @@ namespace EntitiesDotNet;
 
 public partial class Archetype
 {
+    internal const int MaxComponentCount = 8;
+    
     #region Public
 
     public static Archetype Instance() => Empty;
@@ -34,7 +36,7 @@ public partial class Archetype
                 case 0:
                     newArchetype = Empty;
                     break;
-                case < 8:
+                case <= MaxComponentCount:
                 {
                     var assembly = typeof(Archetype).Assembly;
                     var typeName = $"EntitiesDotNet.Archetype`{componentsArray.Length}";
