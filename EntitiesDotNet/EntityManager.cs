@@ -117,6 +117,7 @@ public partial class EntityManager : IHasVersion
 
     public IComponentArray GetArray(Archetype archetype)
     {
+        archetype = archetype.Add<EntityId>();
         if (this._arrayByArchetype.TryGetValue(archetype, out var array))
         {
             return array;

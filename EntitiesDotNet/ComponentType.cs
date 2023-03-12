@@ -10,8 +10,8 @@ public static class ComponentType<T>
 public class ComponentType : IComparable<ComponentType>
 {
     public readonly Type Type;
-    public readonly int Id;
-
+    public readonly byte Id;
+    public readonly ComponentTypeFlags Flag;
 
     public override string ToString()
     {
@@ -31,7 +31,7 @@ public class ComponentType : IComparable<ComponentType>
     public static ComponentType Instance<T>() => ComponentType<T>.Instance;
 
 
-    public static ComponentType Instance(int id)
+    public static ComponentType Instance(byte id)
     {
         lock (ComponentTypes)
         {
@@ -55,7 +55,7 @@ public class ComponentType : IComparable<ComponentType>
             }
 
             {
-                var componentType = new ComponentType(count, type);
+                var componentType = new ComponentType((byte)count, type);
                 ComponentTypes.Add(componentType);
                 return componentType;
             }
@@ -67,10 +67,11 @@ public class ComponentType : IComparable<ComponentType>
     public static implicit operator Type(ComponentType type) => type.Type;
 
 
-    private ComponentType(int id, Type type)
+    private ComponentType(byte id, Type type)
     {
         this.Id = id;
         this.Type = type;
+        this.Flag = new ComponentTypeFlags(id);
     }
 
 

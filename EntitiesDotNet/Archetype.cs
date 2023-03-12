@@ -4,14 +4,14 @@
 namespace EntitiesDotNet;
 
 
-public partial class Archetype
+public sealed partial class Archetype
 {
     #region Static
 
     static Archetype()
     {
         ArchetypePool = new ArchetypePoolClass();
-        Empty = ArchetypePool.Get(new ComponentTypeSet());
+        Empty = ArchetypePool.Get(new ComponentTypeFlags());
     }
 
 
@@ -19,11 +19,11 @@ public partial class Archetype
     public static Archetype Instance() => Empty;
 
 
-    public static Archetype Instance(ComponentTypeSet id)
+    public static Archetype Instance(ComponentTypeFlags flags)
     {
         lock (Locker)
         {
-            return ArchetypePool.Get(id);
+            return ArchetypePool.Get(flags);
         }
     }
 
@@ -36,17 +36,17 @@ public partial class Archetype
 
     #region Public
 
-    protected Archetype(ComponentTypeSet components)
+    private Archetype(ComponentTypeFlags flags)
     {
-        this.ComponentTypeSet = components;
-        this._components = components.ToImmutableArray();
+        this.Flags = flags;
+        this.Components = flags.GetComponentTypeArray();
     }
 
 
-    public ComponentTypeSet ComponentTypeSet { get; }
+    public ComponentTypeFlags Flags { get; }
 
 
-    public ReadOnlySpan<ComponentType> Components => this._components.AsSpan();
+    public ImmutableArray<ComponentType> Components { get; }
 
 
     public bool Contains(ComponentType component)
@@ -55,33 +55,33 @@ public partial class Archetype
     }
 
 
-    public bool Contains(ComponentTypeSet components)
+    public bool Contains(ComponentTypeFlags components)
     {
-        return this.ComponentTypeSet.Contains(components);
+        return (this.Flags & components) == components;
     }
 
 
-    public Archetype Add(ComponentTypeSet components)
+    public Archetype Add(ComponentTypeFlags components)
     {
-        var newComponentTypeSet = this.ComponentTypeSet.Add(components);
-        return newComponentTypeSet == this.ComponentTypeSet
+        var newFlags = this.Flags | components;
+        return newFlags == this.Flags
             ? this
-            : Instance(newComponentTypeSet);
+            : Instance(newFlags);
     }
 
 
-    public Archetype Remove(ComponentTypeSet components)
+    public Archetype Remove(ComponentTypeFlags components)
     {
-        var newComponentTypeSet = this.ComponentTypeSet.Remove(components);
-        return newComponentTypeSet == this.ComponentTypeSet
+        var newFlags = this.Flags & ~components;
+        return newFlags == this.Flags
             ? this
-            : Instance(newComponentTypeSet);
+            : Instance(newFlags);
     }
 
 
     public int GetIndex(ComponentType component)
     {
-        return this._components.BinarySearch(component);
+        return this.Components.BinarySearch(component);
     }
 
 
@@ -90,7 +90,7 @@ public partial class Archetype
 
     public override string ToString()
     {
-        var components = string.Join(", ", this._components.Select(x => x.Type.Name));
+        var components = string.Join(", ", this.Components.Select(x => x.Type.Name));
         return $"Archetype {{ {components} }}";
     }
 
@@ -99,27 +99,25 @@ public partial class Archetype
 
     #region Private
 
-    private readonly ImmutableArray<ComponentType> _components;
-
     #endregion
 
 
     private class ArchetypePoolClass
     {
-        public Archetype Get(ComponentTypeSet id)
+        public Archetype Get(ComponentTypeFlags flags)
         {
-            if (!this._archetypeById.TryGetValue(id, out var archetype))
+            if (!this._dictionary.TryGetValue(flags, out var archetype))
             {
-                this._archetypeById[id] = archetype = new Archetype(id);
+                this._dictionary[flags] = archetype = new Archetype(flags);
             }
 
             return archetype;
         }
 
 
-        private readonly Dictionary<ComponentTypeSet, Archetype> _archetypeById = new()
+        private readonly Dictionary<ComponentTypeFlags, Archetype> _dictionary = new()
         {
-            { new ComponentTypeSet(), new Archetype(new ComponentTypeSet()) }
+            { default, new Archetype(default) }
         };
     }
 }

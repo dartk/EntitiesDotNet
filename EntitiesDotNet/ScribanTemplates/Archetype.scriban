@@ -1,6 +1,14 @@
 {{- include '_Global.scriban' -}}
 namespace {{ root_namespace }}; 
 
+{{-
+func flags()
+    ret 0..(count - 1) |
+        array.each @(do; ret string_format "ComponentType<T{0}>.Instance.Flag" $0; end) |
+        array.join " | "
+end 
+-}}
+
 
 {{- for count in 1..type_parameters_count }}
 {{- last_index = count - 1 }}
@@ -8,19 +16,19 @@ namespace {{ root_namespace }};
 
 public static class Archetype<{{ type_parameters_str count }}>
 {
-    public static readonly Archetype Instance = Archetype.Instance(ComponentTypeSet<{{ type_parameters_str count }}>.Instance);
+    public static readonly Archetype Instance = Archetype.Instance({{ flags }});
 }
 {{- end }}
 
 
-public partial class Archetype {
+public sealed partial class Archetype {
 {{- for count in 1..type_parameters_count }}
     {{- type_params = type_parameters_str count }}
 
     public static Archetype Instance<{{ type_params }}>() => Archetype<{{ type_params }}>.Instance;
-    public Archetype Add<{{ type_params }}>() => this.Add(ComponentTypeSet<{{ type_params }}>.Instance);
-    public Archetype Remove<{{ type_params }}>() => this.Remove(ComponentTypeSet<{{ type_params }}>.Instance);
-    public bool Contains<{{ type_params }}>() => this.ComponentTypeSet.Contains(ComponentTypeSet<{{ type_params }}>.Instance);
+    public Archetype Add<{{ type_params }}>() => this.Add({{ flags }});
+    public Archetype Remove<{{ type_params }}>() => this.Remove({{ flags }});
+    public bool Contains<{{ type_params }}>() => this.Flags.Contains({{ flags }});
 {{- end }}
 
 }
