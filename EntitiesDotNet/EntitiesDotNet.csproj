@@ -28,7 +28,7 @@
 
     <ItemGroup>
         <PackageReference Include="System.Memory" Version="4.5.5" />
-        <PackageReference Include="Dartk.CSharp.SourceGen.Scriban" Version="0.3.0" PrivateAssets="all" />
+        <PackageReference Include="Dartk.CSharp.SourceGen.Scriban" Version="0.3.1" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
