@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 namespace EntityComponentSystem.Tests;
 
 
-[GenerateImplicitOperators]
+[WrapperStruct]
 public partial record struct Width
 {
     public float Float;
@@ -17,7 +17,7 @@ public partial record struct Width
 }
 
 
-[GenerateImplicitOperators]
+[WrapperStruct]
 public partial record struct Height
 {
     public float Float;

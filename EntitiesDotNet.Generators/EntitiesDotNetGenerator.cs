@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 
@@ -12,39 +13,51 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
     {
         context.RegisterPostInitializationOutput(static context =>
         {
+            WrapperStruct.AddAttributes(context);
             EntityRef.AddAttributes(context);
             Inlining.AddAttributes(context);
         });
 
         var entityRefProvider = EntityRef.CreateProvider(context);
-        context.RegisterImplementationSourceOutput(entityRefProvider, static (context, arg) =>
-        {
-            switch (arg)
+        context.RegisterImplementationSourceOutputForResult(entityRefProvider!);
+
+        var wrapperStructsProvider = WrapperStruct.CreateProvider(context);
+        context.RegisterImplementationSourceOutputForResult(wrapperStructsProvider!);
+
+        var entityRefSyntaxTrees = entityRefProvider
+            .Where(static x => x is Result.Ok)
+            .Select(static (x, token) =>
             {
-                case Result.Ok { File: var file }:
-                    FileNameWithText.AddSource(context, file);
-                    break;
-                case Result.Error { Exception: var ex }:
-                    context.ReportDiagnostic(Diagnostic.Create(ErrorDescriptor, Location.None,
-                        ex.Message));
-                    break;
-            }
-        });
+                var file = ((Result.Ok)x).File;
+                return CSharpSyntaxTree.ParseText(file.Text, cancellationToken: token);
+            })
+            .Collect();
+
+        var wrapperStructsSyntaxTrees = wrapperStructsProvider
+            .Where(static x => x is Result.Ok)
+            .Select(static (x, token) =>
+            {
+                var file = ((Result.Ok)x).File;
+                return CSharpSyntaxTree.ParseText(file.Text, cancellationToken: token);
+            })
+            .Collect();
+
+        var generatedSyntaxTreesProvider = entityRefSyntaxTrees.Combine(wrapperStructsSyntaxTrees)
+            .Select(static (arg, _) =>
+            {
+                var (left, right) = arg;
+                var builder = ImmutableArray.CreateBuilder<SyntaxTree>(left.Length + right.Length);
+                builder.AddRange(left);
+                builder.AddRange(right);
+                return builder.MoveToImmutable();
+            });
 
         var compilationWithGeneratedProvider = context.CompilationProvider
-            .Combine(
-                entityRefProvider
-                    .Where(static x => x is Result.Ok)
-                    .Select(static (x, _) => ((Result.Ok)x).File)
-                    .Collect())
-            .Select(static (arg, token) =>
+            .Combine(generatedSyntaxTreesProvider)
+            .Select(static (arg, _) =>
             {
-                var (compilation, files) = arg;
-
-                var compilationWithGeneratedEntityRefs = compilation.AddSyntaxTrees(
-                    files.Select(file =>
-                        CSharpSyntaxTree.ParseText(file.Text, cancellationToken: token)));
-
+                var (compilation, syntaxTrees) = arg;
+                var compilationWithGeneratedEntityRefs = compilation.AddSyntaxTrees(syntaxTrees);
                 return compilationWithGeneratedEntityRefs;
             });
 
@@ -80,31 +93,6 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
             })
             .Where(x => x != null);
 
-        context.RegisterImplementationSourceOutput(inliningProvider, static (context, result) =>
-        {
-            switch (result)
-            {
-                case Result.Ok { File: var file }:
-                    FileNameWithText.AddSource(context, file);
-                    break;
-                case Result.Error { Exception: var ex }:
-                    context.ReportDiagnostic(Diagnostic.Create(ErrorDescriptor, Location.None,
-                        ex.Message));
-                    break;
-            }
-        });
+        context.RegisterImplementationSourceOutputForResult(inliningProvider);
     }
-
-
-    private static readonly DiagnosticDescriptor ErrorDescriptor = new(
-        id: $"{DiagnosticIdPrefix}001",
-        title: "EntitiesDotNet source generator error",
-        messageFormat: "{0}",
-        category: DiagnosticCategory,
-        DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
-
-
-    private const string DiagnosticIdPrefix = "EntitiesDotNet";
-    private const string DiagnosticCategory = "EntitiesDotNet";
 }

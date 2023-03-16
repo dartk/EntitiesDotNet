@@ -5,7 +5,7 @@ using EntitiesDotNet;
 namespace EntityComponentSystem.Tests;
 
 
-[GenerateImplicitOperators]
+[WrapperStruct]
 public partial record struct Translation
 {
     public float Float;

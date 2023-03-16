@@ -245,7 +245,7 @@ internal static class Inline
                 var continueStatement = SyntaxFactory.ContinueStatement();
                 var newBlock = block.ReplaceNodes(returnStatements,
                     (_, _) => continueStatement);
-                
+
                 return newBlock.ToString();
             case ExpressionSyntax expression:
                 return expression + ";";
@@ -267,26 +267,13 @@ internal static class Inline
         var child = invocationExpression.ChildNodes().First();
         var methodIdentifier = child.DescendantNodesAndSelf()
             .OfType<IdentifierNameSyntax>().Last();
-
+        
         var getMethodSymbolResult =
             ModelExtensions.GetSymbolInfo(semanticModel, methodIdentifier, token);
-        // Logger.Log(invocationExpression);
-        // Logger.Log(getMethodSymbolResult.CandidateReason);
-        // Logger.Log(getMethodSymbolResult.CandidateSymbols.Length);
 
-        var methodSymbol = (IMethodSymbol?)getMethodSymbolResult.Symbol;
-        if (methodSymbol == null)
-        {
-            if (getMethodSymbolResult.CandidateSymbols.Length == 1)
-            {
-                methodSymbol = (IMethodSymbol)getMethodSymbolResult.CandidateSymbols[0];
-            }
-            else
-            {
-                throw new Exception("Method symbol was not found");
-            }
-        }
-
+        var methodSymbol = (IMethodSymbol?)getMethodSymbolResult.Symbol
+            ?? throw new Exception($"Method symbol was not found.");
+        
         return new InlinableMethodInfo(methodSymbol, invocationExpression);
     }
 
@@ -435,6 +422,7 @@ internal static class Inline
                 inlinedName = symbol.Name + "_Inlined";
             }
         }
+
         writer.Write(inlinedName);
 
         var typeParameterList = methodSyntax.ChildNodes().OfType<TypeParameterListSyntax>()
