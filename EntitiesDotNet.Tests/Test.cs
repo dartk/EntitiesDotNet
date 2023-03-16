@@ -10,10 +10,6 @@ namespace EntityComponentSystem.Tests;
 public partial record struct Width
 {
     public float Float;
-
-
-    public override string ToString() =>
-        this.Float.ToString(CultureInfo.InvariantCulture);
 }
 
 
@@ -21,10 +17,6 @@ public partial record struct Width
 public partial record struct Height
 {
     public float Float;
-
-
-    public override string ToString() =>
-        this.Float.ToString(CultureInfo.InvariantCulture);
 }
 
 

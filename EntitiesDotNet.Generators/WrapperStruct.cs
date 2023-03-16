@@ -48,7 +48,7 @@ internal static class WrapperStruct
             .Where(x => x is IFieldSymbol && !x.IsImplicitlyDeclared)
             .Cast<IFieldSymbol>()
             .ToList();
-        
+
         token.ThrowIfCancellationRequested();
 
         if (fieldSymbols.Count != 1)
@@ -61,16 +61,24 @@ internal static class WrapperStruct
 
         var fieldSymbol = fieldSymbols.First();
         var fieldName = fieldSymbol.Name;
-        var fieldType = fieldSymbol.Type.ToDisplayString();
+        var fieldType = fieldSymbol.Type;
+        var fieldTypeName = fieldType.ToDisplayString();
+
+        var toStringInvocation =
+            fieldType.IsValueType
+            && fieldType.NullableAnnotation != NullableAnnotation.Annotated
+                ? fieldName + ".ToString()"
+                : fieldName + "?.ToString()";
 
         var operators = $$"""
-            public static implicit operator {{fieldType}}({{structType}} value) =>
+            public static implicit operator {{fieldTypeName}}({{structType}} value) =>
                 value.{{fieldName}};
-            public static implicit operator {{structType}}({{fieldType}} value) {
+            public static implicit operator {{structType}}({{fieldTypeName}} value) {
                 var result = default({{structType}});
                 result.{{fieldName}} = value;
                 return result;
             }
+            public override string ToString() => this.{{toStringInvocation}};
             """;
 
         token.ThrowIfCancellationRequested();
