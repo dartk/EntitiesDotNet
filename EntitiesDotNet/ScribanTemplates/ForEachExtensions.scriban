@@ -86,11 +86,12 @@ for $count in 1..type_parameters_count
         ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
         
-        for (var __i = 0; __i < 1; ++__i)
+        for (;;)
         {
     #region Inlined lambda
             {func.body}
     #endregion
+            break;
         }
         
         for (var __i = 1; __i < __count; ++__i)
@@ -130,12 +131,13 @@ for $count in 1..type_parameters_count
         ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
         
-        for (var __i = 0; __i < 1; ++__i)
+        for (;;)
         {
             var {{ func_arg $count }} = 0;
     #region Inlined lambda
             {func.body}
     #endregion
+            break;
         }
         
         for (var __i = 0; __i < __count; ++__i)
@@ -178,11 +180,12 @@ for $count in 1..type_parameters_count
             ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
             
-            for (var __i = 0; __i < 1; ++__i)
+            for (;;)
             {
-        #region Inlined lambda
+    #region Inlined lambda
                 {func.body}
-        #endregion
+    #endregion
+                break;
             }
             
             for (var __i = 0; __i < __count; ++__i)
@@ -227,13 +230,14 @@ for $count in 1..type_parameters_count
             ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
             
-            for (var __i = 0; __i < 1; ++__i)
+            for (;;)
             {
                 var {{ func_arg $count }} = __index++;
                 
-        #region Inlined lambda
+    #region Inlined lambda
                 {func.body}
-        #endregion
+    #endregion
+                break;
             }
             
             for (var __i = 0; __i < __count; ++__i)
