@@ -54,8 +54,8 @@ for $count in 1..type_parameters_count
         $suffix = rw_suffix $count $read_count
         $args = RefFuncDefinitionArgs $count $read_count
 }}
-public delegate void RefFunc_{{ $suffix }}<{{ $type_params }}>({{ $args }});
-public delegate void RefFunc_{{ $suffix }}_I<{{ $type_params }}>({{ $args }}, int index);
+public delegate void Func_{{ $suffix }}<{{ $type_params }}>({{ $args }});
+public delegate void Func_{{ $suffix }}_I<{{ $type_params }}>({{ $args }}, int index);
 {{-
     end
 end

@@ -105,7 +105,7 @@ for $count in 1..type_parameters_count
     #endregion
         }
     """)]
-    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, RefFunc_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, Func_{{ $suffix }}<{{ $type_parameters_str }}> func) {
         if (!@this.Archetype.Contains<{{ $type_parameters_str }}>()) {
             return;
         }
@@ -140,7 +140,7 @@ for $count in 1..type_parameters_count
             break;
         }
         
-        for (var __i = 0; __i < __count; ++__i)
+        for (var __i = 1; __i < __count; ++__i)
         {
             var {{ func_arg $count }} = __i;
             
@@ -153,7 +153,7 @@ for $count in 1..type_parameters_count
     #endregion
         }
     """)]
-    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, RefFunc_{{ $suffix }}_I<{{ $type_parameters_str }}> func) {
+    public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, Func_{{ $suffix }}_I<{{ $type_parameters_str }}> func) {
         if (!@this.Archetype.Contains<{{ $type_parameters_str }}>()) {
             return;
         }
@@ -188,7 +188,7 @@ for $count in 1..type_parameters_count
                 break;
             }
             
-            for (var __i = 0; __i < __count; ++__i)
+            for (var __i = 1; __i < __count; ++__i)
             {
                 {{- for $i in 0..($count - 1) }}
                 {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
@@ -200,7 +200,7 @@ for $count in 1..type_parameters_count
             }
         }
     """)]
-    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, RefFunc_{{ $suffix }}<{{ $type_parameters_str }}> func) {
+    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, Func_{{ $suffix }}<{{ $type_parameters_str }}> func) {
         foreach (var array in @this) {
             if (!array.Archetype.Contains<{{ $type_parameters_str }}>()) {
                 continue;
@@ -240,7 +240,7 @@ for $count in 1..type_parameters_count
                 break;
             }
             
-            for (var __i = 0; __i < __count; ++__i)
+            for (var __i = 1; __i < __count; ++__i)
             {
                 var {{ func_arg $count }} = __index++;
                 
@@ -254,7 +254,7 @@ for $count in 1..type_parameters_count
             }
         }
     """)]
-    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, RefFunc_{{ $suffix }}_I<{{ $type_parameters_str }}> func) {
+    public static void ForEach<{{ $type_parameters_str }}>(this IEnumerable<IComponentArray> @this, Func_{{ $suffix }}_I<{{ $type_parameters_str }}> func) {
         var index = 0;
         foreach (var array in @this) {
             if (!array.Archetype.Contains<{{ $type_parameters_str }}>()) {
