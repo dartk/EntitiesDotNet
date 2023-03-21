@@ -119,7 +119,7 @@ public static partial class EntityRefForEachExtensions
             }
         }
         """)]
-    {{ extensions_accessibility }} static void ForEach(this EntityArrays @this, {{ full_name }}.Delegates.ForEach action)
+    {{ extensions_accessibility }} static void ForEach(this IEnumerable<IComponentArray> @this, {{ full_name }}.Delegates.ForEach action)
     {
         foreach (var array in @this)
         {
@@ -170,36 +170,12 @@ public static partial class EntityRefForEachExtensions
             }
         }
         """)]
-    {{ extensions_accessibility }} static void ForEach(this EntityArrays @this, {{ full_name }}.Delegates.ForEach_I action)
+    {{ extensions_accessibility }} static void ForEach(this IEnumerable<IComponentArray> @this, {{ full_name }}.Delegates.ForEach_I action)
     {
         var index = 0;
         foreach (var array in @this)
         {
-            var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
-            
-            if (count == 0) continue;
-            
-            var entity = new {{ full_name }}
-            {
-                {{- for component in all_components }}
-                {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
-                {{- end }}
-            };
-            
-            action(entity, index++);
-            
-            for (var i = 1; i < count; ++i)
-            {
-                {{- for component in read_components }}
-                entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
-                {{- end }}
-                
-                {{- for component in write_components }}
-                entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
-                {{- end }}
-                
-                action(entity, index++);
-            }
+            array.ForEach(action, ref index);
         }
     }
     
@@ -236,6 +212,13 @@ public static partial class EntityRefForEachExtensions
     
     {{ extensions_accessibility }} static void ForEach(this IComponentArray array, {{ full_name }}.Delegates.ForEach_I action)
     {
+        var index = 0;
+        array.ForEach(action, ref index);
+    }
+    
+    
+    private static void ForEach(this IComponentArray array, {{ full_name }}.Delegates.ForEach_I action, ref int index)
+    {
         var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
         
         if (count == 0) return;
@@ -247,7 +230,7 @@ public static partial class EntityRefForEachExtensions
             {{- end }}
         };
         
-        action(entity, 0);
+        action(entity, index++);
         
         for (var i = 1; i < count; ++i)
         {
@@ -259,7 +242,7 @@ public static partial class EntityRefForEachExtensions
             entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
             {{- end }}
             
-            action(entity, i);
+            action(entity, index++);
         }
     }
 }
