@@ -96,12 +96,11 @@ public static partial class EntityRefForEachExtensions
             {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
             {{- end }}
             
-            for (;;)
+            for (var __first = true; __first; __first = false)
             {
         #region Inlined lambda
                 {action.body}
         #endregion
-                break;
             }
             
             for (var __i = 1; __i < __count; ++__i)
@@ -145,13 +144,12 @@ public static partial class EntityRefForEachExtensions
             {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
             {{- end }}
             
-            for (;;)
+            for (var __first = true; __first; __first = false)
             {
                 var {action.arg1} = __index++;
         #region Inlined lambda
                 {action.body}
         #endregion
-                break;
             }
             
             for (var __i = 1; __i < __count; ++__i)

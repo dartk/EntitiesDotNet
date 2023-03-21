@@ -88,12 +88,11 @@ for $count in 1..type_parameters_count
         ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
         
-        for (;;)
+        for (var __first = true; __first; __first = false)
         {
     #region Inlined lambda
             {func.body}
     #endregion
-            break;
         }
         
         for (var __i = 1; __i < __count; ++__i)
@@ -141,13 +140,12 @@ for $count in 1..type_parameters_count
         ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
         
-        for (;;)
+        for (var __first = true; __first; __first = false)
         {
             var {{ func_arg $count }} = 0;
     #region Inlined lambda
             {func.body}
     #endregion
-            break;
         }
         
         for (var __i = 1; __i < __count; ++__i)
@@ -204,12 +202,11 @@ for $count in 1..type_parameters_count
             ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
             
-            for (;;)
+            for (var __first = true; __first; __first = false)
             {
     #region Inlined lambda
                 {func.body}
     #endregion
-                break;
             }
             
             for (var __i = 1; __i < __count; ++__i)
@@ -243,14 +240,13 @@ for $count in 1..type_parameters_count
             ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
             
-            for (;;)
+            for (var __first = true; __first; __first = false)
             {
                 var {{ func_arg $count }} = __index++;
                 
     #region Inlined lambda
                 {func.body}
     #endregion
-                break;
             }
             
             for (var __i = 1; __i < __count; ++__i)
