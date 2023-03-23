@@ -20,6 +20,11 @@ public static class Inlining
         var name = attribute.Name;
         while (true)
         {
+            if (name is IdentifierNameSyntax ins)
+            {
+                return ins.Identifier.Text is Inline or Inline + "Attribute";
+            }
+
             if (name is not QualifiedNameSyntax qns)
             {
                 return false;
@@ -59,6 +64,9 @@ internal class GeneratedFromAttribute : Attribute
 [AttributeUsage(AttributeTargets.Method)]
 internal class InlineAttribute : Attribute
 {
+    public InlineAttribute(string? name = null)
+    {
+    }
 }
 
 
@@ -107,7 +115,8 @@ internal static class Inline
 
     public static bool Predicate(SyntaxNode syntaxNode, CancellationToken _)
     {
-        return syntaxNode is AttributeSyntax attribute && IsInlineAttribute(attribute);
+        return syntaxNode is AttributeSyntax attribute && IsInlineAttribute(attribute)
+            && syntaxNode.Parent?.Parent is MethodDeclarationSyntax;
     }
 
 
@@ -309,14 +318,15 @@ internal static class Inline
         IMethodSymbol methodSymbol)
     {
         var attribute = methodSymbol.GetAttributes()
-            .First(x => x.AttributeClass is { ContainingType.Name: Inline });
+            .First(x => x.AttributeClass is
+                { Name: "InlineAttribute" } or
+                { ContainingType.Name: Inline });
 
         var accessibility = attribute.AttributeClass!.Name switch
         {
-            "PrivateAttribute" => Accessibility.Private,
-            "ProtectedAttribute" => Accessibility.Protected,
+            "InlineAttribute" or "PublicAttribute" => Accessibility.Public,
             "InternalAttribute" => Accessibility.Internal,
-            "PublicAttribute" => Accessibility.Public,
+            "ProtectedAttribute" => Accessibility.Protected,
             _ => Accessibility.Private
         };
 
