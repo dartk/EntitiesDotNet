@@ -1,4 +1,7 @@
-﻿namespace EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark.Systems;
+﻿using EntitiesDotNet.Delegates;
+
+
+namespace EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark.Systems;
 
 
 public static partial class ForEachSystem
@@ -6,7 +9,7 @@ public static partial class ForEachSystem
     [Inline.Public(nameof(Execute_Inlined))]
     public static void Execute_Lambda(EntityArrays entities, float deltaTime)
     {
-        entities.ForEach([Inline](in Acceleration a, ref Velocity v) =>
+        entities.ForEach((in Acceleration a, ref Velocity v) =>
         {
             UpdateVelocity(a, ref v, deltaTime);
         });

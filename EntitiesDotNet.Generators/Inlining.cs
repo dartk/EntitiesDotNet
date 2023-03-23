@@ -255,9 +255,12 @@ internal static class Inline
     }
 
 
-    private static InlinableMethodInfo GetInlinableMethodInfo(
-        LambdaExpressionSyntax lambda, SemanticModel semanticModel, CancellationToken token)
+    private static bool GetInlinableMethodInfo(
+        LambdaExpressionSyntax lambda, SemanticModel semanticModel, CancellationToken token,
+        out InlinableMethodInfo info)
     {
+        info = default;
+
         var invocationExpression = lambda.FirstAncestorOrSelf<InvocationExpressionSyntax>();
         if (invocationExpression == null)
         {
@@ -267,34 +270,38 @@ internal static class Inline
         var child = invocationExpression.ChildNodes().First();
         var methodIdentifier = child.DescendantNodesAndSelf()
             .OfType<IdentifierNameSyntax>().Last();
-        
+
+        if (!IsInlinableMethodName(methodIdentifier.Identifier.Text)) return false;
+
         var getMethodSymbolResult =
             ModelExtensions.GetSymbolInfo(semanticModel, methodIdentifier, token);
 
-        var methodSymbol = (IMethodSymbol?)getMethodSymbolResult.Symbol
-            ?? throw new Exception($"Method symbol was not found.");
-        
-        return new InlinableMethodInfo(methodSymbol, invocationExpression);
+        var methodSymbol = (IMethodSymbol?)getMethodSymbolResult.Symbol;
+        if (methodSymbol == null)
+        {
+            return false;
+        }
+
+        info = new InlinableMethodInfo(methodSymbol, invocationExpression);
+        return true;
     }
 
 
-    private static string GetInliningTemplate(IMethodSymbol method)
+    private static bool GetInliningTemplate(IMethodSymbol method, out string template)
     {
         var methodAttribute = method.GetAttributes()
             .FirstOrDefault(x => x.AttributeClass?.Name == SupportsInliningAttribute);
 
         if (methodAttribute == null)
         {
-            throw new Exception("Method does not support inlining");
+            template = null!;
+            return false;
         }
 
-        var template = GetAttributeArgumentValue(methodAttribute);
-        if (template == null)
-        {
-            throw new Exception("Inlining template is null.");
-        }
+        var templateText = GetAttributeArgumentValue(methodAttribute);
 
-        return template;
+        template = templateText!;
+        return templateText != null;
     }
 
 
@@ -339,11 +346,14 @@ internal static class Inline
     }
 
 
-    private static string GetInlinedText(ParenthesizedLambdaExpressionSyntax lambda,
+    private static string? GetInlinedText(ParenthesizedLambdaExpressionSyntax lambda,
         SemanticModel semanticModel, CancellationToken token)
     {
-        var methodInfo = GetInlinableMethodInfo(lambda, semanticModel, token);
-        var template = GetInliningTemplate(methodInfo.Symbol);
+        if (!(GetInlinableMethodInfo(lambda, semanticModel, token, out var methodInfo)
+            && GetInliningTemplate(methodInfo.Symbol, out var template)))
+        {
+            return null;
+        }
 
         var parameters = GetLambdaParameters(lambda);
         var body = GetLambdaBody(lambda);
@@ -442,16 +452,19 @@ internal static class Inline
     private static void WriteInlinedMethodBlock(TextWriter writer,
         MethodDeclarationSyntax methodSyntax, SemanticModel semanticModel, CancellationToken token)
     {
-        var inlineAttributes = methodSyntax.DescendantNodes().Where(x => x.IsAttribute(Inline));
-        var inlineBlocks = inlineAttributes.Select(inlineAttrNode =>
-        {
-            var lambda = inlineAttrNode.FirstAncestorOrSelf<ParenthesizedLambdaExpressionSyntax>()
-                ?? throw new Exception("Lambda expression was not found.");
+        var lambdaNodes = methodSyntax.DescendantNodes()
+            .OfType<ParenthesizedLambdaExpressionSyntax>();
 
-            var expression = lambda.FirstAncestorOrSelf<ExpressionStatementSyntax>()
+        var inlineBlocks = lambdaNodes.Select(lambdaNode =>
+        {
+            var expression = lambdaNode.FirstAncestorOrSelf<ExpressionStatementSyntax>()
                 ?? throw new Exception("Expression statement was not found.");
 
-            var inlinedText = GetInlinedText(lambda, semanticModel, token);
+            var inlinedText = GetInlinedText(lambdaNode, semanticModel, token);
+            if (inlinedText == null)
+            {
+                return null;
+            }
 
             return new
             {
@@ -459,7 +472,7 @@ internal static class Inline
                 expression.SpanStart,
                 SpanEnd = expression.Span.End
             };
-        });
+        }).Where(x => x != null);
 
         var methodBlock = methodSyntax.ChildNodes().OfType<BlockSyntax>().First();
         var methodBlockText = methodSyntax.SyntaxTree.GetText();
@@ -468,7 +481,7 @@ internal static class Inline
         foreach (var inlineBlock in inlineBlocks)
         {
             var sourceTextBeforeForEach =
-                methodBlockText.ToString(TextSpan.FromBounds(lastPosition, inlineBlock.SpanStart));
+                methodBlockText.ToString(TextSpan.FromBounds(lastPosition, inlineBlock!.SpanStart));
 
             writer.WriteLine(sourceTextBeforeForEach);
             writer.WriteLine(inlineBlock.InlinedText);
@@ -478,5 +491,11 @@ internal static class Inline
 
         writer.WriteLine(
             methodBlockText.ToString(TextSpan.FromBounds(lastPosition, methodBlock.Span.End)));
+    }
+
+
+    private static bool IsInlinableMethodName(string name)
+    {
+        return name == "ForEach";
     }
 }

@@ -43,7 +43,7 @@ public partial class InliningReturnStatementTest
     [Inline.Private]
     private static void ForEachComponents(EntityArrays entities)
     {
-        entities.ForEach([Inline](ref int i, int index) =>
+        entities.ForEach((ref int i, int index) =>
         {
             if (index % 2 == 0)
             {
@@ -58,7 +58,7 @@ public partial class InliningReturnStatementTest
     [Inline.Private]
     private static void ForEachEntityRef(EntityArrays entities)
     {
-        entities.ForEach([Inline](in IterationTests.EInt entity, int index) =>
+        entities.ForEach((in IterationTests.EInt entity, int index) =>
         {
             if (index % 2 == 0)
             {

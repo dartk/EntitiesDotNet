@@ -99,8 +99,8 @@ public partial class IterationTests
     [Inline.Private]
     private static void EntityRefForEachSystem(EntityArrays entities)
     {
-        entities.ForEach([Inline](in EInt entity) => entity.Int = entity.EntityId.Id);
-        entities.ForEach([Inline](in EIntDouble entity) => entity.Double = entity.Int);
+        entities.ForEach((in EInt entity) => entity.Int = entity.EntityId.Id);
+        entities.ForEach((in EIntDouble entity) => entity.Double = entity.Int);
     }
 
 
@@ -152,8 +152,8 @@ public partial class IterationTests
     [Inline.Private]
     private static void EntityRefForEachWithIndexSystem(EntityArrays entities)
     {
-        entities.ForEach([Inline](in EInt entity, int index) => entity.Int = index);
-        entities.ForEach([Inline](in EIntDouble entity, int index) => entity.Double = index);
+        entities.ForEach((in EInt entity, int index) => entity.Int = index);
+        entities.ForEach((in EIntDouble entity, int index) => entity.Double = index);
     }
 
 
