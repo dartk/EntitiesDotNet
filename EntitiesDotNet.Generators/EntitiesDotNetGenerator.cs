@@ -9,6 +9,9 @@ namespace EntitiesDotNet.Generators;
 [Generator]
 public class EntitiesDotNetGenerator : IIncrementalGenerator
 {
+    private const string INLINE = "INLINE";
+
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         context.RegisterPostInitializationOutput(static context =>
@@ -61,38 +64,39 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
                 return compilationWithGeneratedEntityRefs;
             });
 
+        var inliningProvider =
+            Inlining.GetGeneratedFilesProvider(context, compilationWithGeneratedProvider);
+            // context.SyntaxProvider.CreateSyntaxProvider(
+            //     Inlining.Predicate,
+            //     static (context, _) => context.Node)
+            // .Combine(compilationWithGeneratedProvider)
+            // .Select(static (arg, token) =>
+            // {
+            //     try
+            //     {
+            //         var (node, compilationWithGenerated) = arg;
+            //         var semanticModel = compilationWithGenerated.GetSemanticModel(node.SyntaxTree);
+            //         var file = Inlining.Transform(node, semanticModel, token);
+            //         if (file.IsEmpty)
+            //         {
+            //             return null;
+            //         }
+            //
+            //         file = file.FormatText(token);
+            //
+            //         return new Result.Ok(file).AsResult;
+            //     }
+            //     catch (OperationCanceledException)
+            //     {
+            //         throw;
+            //     }
+            //     catch (Exception ex)
+            //     {
+            //         return new Result.Error(ex);
+            //     }
+            // })
+            // .Where(x => x != null);
 
-        var inliningProvider = context.SyntaxProvider.CreateSyntaxProvider(
-                Inlining.Predicate,
-                static (context, _) => context.Node)
-            .Combine(compilationWithGeneratedProvider)
-            .Select(static (arg, token) =>
-            {
-                try
-                {
-                    var (node, compilationWithGenerated) = arg;
-                    var semanticModel = compilationWithGenerated.GetSemanticModel(node.SyntaxTree);
-                    var file = Inlining.Transform(node, semanticModel, token);
-                    if (file.IsEmpty)
-                    {
-                        return null;
-                    }
-
-                    file = file.FormatText(token);
-
-                    return new Result.Ok(file).AsResult;
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    return new Result.Error(ex);
-                }
-            })
-            .Where(x => x != null);
-
-        context.RegisterImplementationSourceOutputForResult(inliningProvider);
+        context.RegisterImplementationSourceOutputForResult(inliningProvider!);
     }
 }

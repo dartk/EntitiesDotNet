@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Text;
 using CSharp.SourceGen.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -9,10 +10,83 @@ using Microsoft.CodeAnalysis.Text;
 namespace EntitiesDotNet.Generators;
 
 
-public static class Inlining
+internal static class Inlining
 {
+    private const string INLINE = "INLINE";
+
+
     private const string Inline = nameof(Inline);
     private const string SupportsInliningAttribute = nameof(SupportsInliningAttribute);
+
+
+    public static IncrementalValuesProvider<Result> GetGeneratedFilesProvider(
+        IncrementalGeneratorInitializationContext context,
+        IncrementalValueProvider<Compilation> compilationProvider)
+    {
+        var treeAndModelProvider = GetSyntaxAndModelWithUndefinedPreprocessorName(
+            context, compilationProvider, INLINE);
+
+        return treeAndModelProvider.Select<SyntaxTreeAndSemanticModel, Result>(
+            static (arg, token) =>
+            {
+                try
+                {
+                    var (tree, model) = arg;
+
+                    var originalSource = tree.GetText();
+                    var generatedSource = originalSource;
+
+                    var inlinedMethods = GetMethodsWithInlinedAttribute(tree.GetRoot());
+                    var writer = new StringWriter();
+
+                    foreach (var method in inlinedMethods)
+                    {
+                        if (method.Body == null) continue;
+
+                        writer.GetStringBuilder().Clear();
+                        WriteInlinedMethodBlock(writer, method, model, token);
+                        var newBody = writer.ToString();
+
+                        generatedSource = generatedSource.Replace(method.Body.Span, newBody);
+                    }
+
+                    var originalFileName = tree.FilePath;
+                    var generatedFileName =
+                        Path.GetFileNameWithoutExtension(originalFileName) + ".inlined.cs";
+
+                    var generatedSourceText = generatedSource.ToString();
+                    // var generatedSourceText = tree.WithChangedText(generatedSource)
+                    //     .GetRoot().NormalizeWhitespace().ToFullString();
+
+                    return new Result.Ok(new FileNameWithText(generatedFileName,
+                        generatedSourceText));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    return new Result.Error(ex);
+                }
+            });
+    }
+
+
+    private static IEnumerable<MethodDeclarationSyntax>
+        GetMethodsWithInlinedAttribute(SyntaxNode root)
+    {
+        return root.DescendantNodes(static node => node
+                is CompilationUnitSyntax
+                or BaseNamespaceDeclarationSyntax
+                or TypeDeclarationSyntax
+                or MethodDeclarationSyntax
+                or AttributeListSyntax)
+            .OfType<AttributeSyntax>()
+            .Where(static attribute => IsInlineAttribute(attribute))
+            .Select(static attribute => attribute.Parent!.Parent as MethodDeclarationSyntax)
+            .Where(static x => x != null)!;
+    }
 
 
     public static bool IsInlineAttribute(AttributeSyntax attribute)
@@ -484,7 +558,7 @@ internal static class Inline
             };
         }).Where(x => x != null);
 
-        var methodBlock = methodSyntax.ChildNodes().OfType<BlockSyntax>().First();
+        var methodBlock = methodSyntax.Body!;
         var methodBlockText = methodSyntax.SyntaxTree.GetText();
 
         var lastPosition = methodBlock.SpanStart;

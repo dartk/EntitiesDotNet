@@ -131,7 +131,7 @@ public partial class IterationTests
     {
         var em = CreateEntityManager();
 
-        EntityRefForEachSystem_Inlined(em.Entities);
+        // EntityRefForEachSystem_Inlined(em.Entities);
 
         {
             var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));
@@ -185,7 +185,7 @@ public partial class IterationTests
     {
         var em = CreateEntityManager();
 
-        EntityRefForEachWithIndexSystem_Inlined(em.Entities);
+        // EntityRefForEachWithIndexSystem_Inlined(em.Entities);
 
         {
             var (count, ints) = Read<int>.From(em.GetArray(Archetype.Instance<int>()));

@@ -8,6 +8,12 @@
         <IsPackable>false</IsPackable>
 
         <RootNamespace>EntityComponentSystem.Tests</RootNamespace>
+
+        <LangVersion>default</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DefineConstants>TRACE;INLINE</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

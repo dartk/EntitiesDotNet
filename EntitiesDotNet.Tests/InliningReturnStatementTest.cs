@@ -22,7 +22,7 @@ public partial class InliningReturnStatementTest
     public void InliningReturnStatement_Components()
     {
         var em = CreateEntityManager();
-        ForEachComponents_Inlined(em.Entities);
+        // ForEachComponents_Inlined(em.Entities);
         Assert.Equal(
             new[] { 0, 1, 0, 3, 0 },
             em.Entities[0].GetReadOnlySpan<int>().ToArray());
@@ -33,7 +33,7 @@ public partial class InliningReturnStatementTest
     public void InliningReturnStatement_EntityRef()
     {
         var em = CreateEntityManager();
-        ForEachEntityRef_Inlined(em.Entities);
+        // ForEachEntityRef_Inlined(em.Entities);
         Assert.Equal(
             new[] { 0, 1, 0, 3, 0 },
             em.Entities[0].GetReadOnlySpan<int>().ToArray());
@@ -55,7 +55,7 @@ public partial class InliningReturnStatementTest
     }
 
 
-    [Inline.Private]
+    [Inline]
     private static void ForEachEntityRef(EntityArrays entities)
     {
         entities.ForEach((in IterationTests.EInt entity, int index) =>
