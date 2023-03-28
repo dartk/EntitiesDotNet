@@ -32,14 +32,12 @@ internal partial class Native
 
     [LibraryImport(LibPath)]
     public static unsafe partial void update_velocity(int count,
-        UpdateTranslationBenchmark.Acceleration* accelerations,
-        UpdateTranslationBenchmark.Velocity* velocities, float deltaTime);
+        Acceleration* accelerations, Velocity* velocities, float deltaTime);
 
 
     [LibraryImport(LibPath)]
     public static unsafe partial void update_translation(int count,
-        UpdateTranslationBenchmark.Velocity* velocities,
-        UpdateTranslationBenchmark.Translation* translations, float deltaTime);
+        Velocity* velocities, Translation* translations, float deltaTime);
 
 
     [LibraryImport(LibPath)]

@@ -1,1 +1,0 @@
-﻿global using static EntitiesDotNet.Benchmarks.UpdateTranslationBenchmark.Functions;
