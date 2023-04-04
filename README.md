@@ -18,6 +18,7 @@ by [Unity Entities](https://docs.unity3d.com/Packages/com.unity.entities@1.0/man
     - [Entity](#entity)
 - [Iterating over components](#iterating-over-components)
     - [foreach loop](#foreach-loop)
+    - [foreach loop with unmanaged function call](#foreach-loop-with-unmanaged-function-call)
     - [ForEach extensions](#foreach-extensions)
     - [ForEach extensions inlining](#foreach-extensions-inlining)
 - [Iterating over components using EntityRef](#iterating-over-components-using-entityref)
@@ -218,6 +219,36 @@ static class UpdateTranslationSystem
 }
 ```
 
+### foreach loop with unmanaged function call
+
+`Read<TR0, TR1, ...>.Write<TW0, TW1, ...>.From()` method returns spans of components that can be
+passed to an unmanaged function.
+
+```c#
+static class UpdateTranslationSystem
+{
+    public static unsafe void loop_native(EntityArrays entities, float deltaTime)
+    {
+        foreach (var (count, velocities, translations) in
+            Read<Velocity>.Write<Translation>.From(entities))
+        {
+            fixed (Velocity* velocitiesPtr = velocities)
+            fixed (Translation* translationsPtr = translations)
+            {
+                update_translation(count, velocitiesPtr, translationsPtr, deltaTime);
+            }
+        }
+    }
+    
+    [DllImport("native_library.dll")]
+    private static extern void update_translation(
+        int count,
+        Velocity* velocities,
+        Translation* translations,
+        float deltaTime);
+}
+```
+
 ### ForEach extensions
 
 `EntityArrays` and `IComponentArray` extension methods `ForEach` take one of
@@ -283,21 +314,9 @@ static partial class UpdateTranslationSystem
                 var __count = __array.Count;
                 ref var v = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<Velocity>());
                 ref var t = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<Translation>());
-                for (;;)
+                for (var __i = 0; __i < __count; v = ref System.Runtime.CompilerServices.Unsafe.Add(ref v, 1), t = ref System.Runtime.CompilerServices.Unsafe.Add(ref t, 1), ++__i)
                 {
-#region Inlined lambda
                     t += v * deltaTime;
-#endregion
-                    break;
-                }
-
-                for (var __i = 1; __i < __count; ++__i)
-                {
-                    v = ref System.Runtime.CompilerServices.Unsafe.Add(ref v, 1);
-                    t = ref System.Runtime.CompilerServices.Unsafe.Add(ref t, 1);
-#region Inlined lambda
-                    t += v * deltaTime;
-#endregion
                 }
             }
         }
@@ -430,25 +449,11 @@ static partial class UpdateTranslationSystem
                     continue;
                 ref var __Velocity = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__VelocitySpan);
                 ref var __Translation = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__TranslationSpan);
-                entity.Velocity = ref __Velocity;
-                entity.Translation = ref __Translation;
-                for (;;)
+                for (var __i = 0; __i < __count; __Velocity = ref System.Runtime.CompilerServices.Unsafe.Add(ref __Velocity, 1), __Translation = ref System.Runtime.CompilerServices.Unsafe.Add(ref __Translation, 1), ++__i)
                 {
-#region Inlined lambda
-                    entity.Translation += entity.Velocity * deltaTime;
-#endregion
-                    break;
-                }
-
-                for (var __i = 1; __i < __count; ++__i)
-                {
-                    __Velocity = ref System.Runtime.CompilerServices.Unsafe.Add(ref __Velocity, 1);
-                    __Translation = ref System.Runtime.CompilerServices.Unsafe.Add(ref __Translation, 1);
                     entity.Velocity = ref __Velocity;
                     entity.Translation = ref __Translation;
-#region Inlined lambda
                     entity.Translation += entity.Velocity * deltaTime;
-#endregion
                 }
             }
         }
@@ -519,29 +524,13 @@ static partial class InliningExample
 
                 var __count = __array.Count;
                 ref var i = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<int>());
-                for (;;)
+                for (var __i = 0; __i < __count; i = ref System.Runtime.CompilerServices.Unsafe.Add(ref i, 1), ++__i)
                 {
-#region Inlined lambda
                     {
                         if (i <= 0)
                             continue;
                         sum += i;
                     }
-
-#endregion
-                    break;
-                }
-
-                for (var __i = 1; __i < __count; ++__i)
-                {
-                    i = ref System.Runtime.CompilerServices.Unsafe.Add(ref i, 1);
-#region Inlined lambda
-                    {
-                        if (i <= 0)
-                            continue;
-                        sum += i;
-                    }
-#endregion
                 }
             }
         }
@@ -630,7 +619,7 @@ void UpdateTranslation(in Velocity v, ref Translation t, float deltaTime)
 Following component systems are included in the benchmark:
 
 * `native` - uses native C++ arrays
-* `loop_native` - calls native C++ function for managed components
+* `loop_native` - uses [foreach loop that calls unmanaged C++ function](#foreach-loop-with-unmanaged-function-call)
 * `loop` - uses [foreach loop](#foreach-loop)
 * `ext` - uses [`ForEach extensions`](#foreach-extensions)
 * `ext_inl` - uses [`inlined ForEach extensions`](#foreach-extensions-inlining)
