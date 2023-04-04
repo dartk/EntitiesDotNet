@@ -92,30 +92,17 @@ public static partial class EntityRefForEachExtensions
             ref var __{{ component_name_at $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__{{ component_span_name_at $i }});
             {{- end }}
             
-            {{- for $i in 0..($count - 1) }}
-            {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
-            {{- end }}
-            
-            for (var __first = true; __first; __first = false)
-            {
-        #region Inlined lambda
-                {action.body}
-        #endregion
-            }
-            
-            for (var __i = 1; __i < __count; ++__i)
-            {
+            for (var __i = 0; __i < __count;
                 {{- for $i in 0..($count - 1) }}
-                __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1);
+                __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1),
                 {{- end }}
-                
+                ++__i)
+            {
                 {{- for $i in 0..($count - 1) }}
                 {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
                 {{- end }}
                 
-        #region Inlined lambda
                 {action.body}
-        #endregion
             }
         }
         """)]
@@ -140,33 +127,19 @@ public static partial class EntityRefForEachExtensions
             ref var __{{ component_name_at $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__{{ component_span_name_at $i }});
             {{- end }}
             
-            {{- for $i in 0..($count - 1) }}
-            {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
-            {{- end }}
-            
-            for (var __first = true; __first; __first = false)
-            {
-                var {action.arg1} = __index++;
-        #region Inlined lambda
-                {action.body}
-        #endregion
-            }
-            
-            for (var __i = 1; __i < __count; ++__i)
-            {
-                var {action.arg1} = __index++;
-                
+            for (var __i = 0; __i < __count;
                 {{- for $i in 0..($count - 1) }}
-                __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1);
+                __{{ component_name_at $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref __{{ component_name_at $i }}, 1),
                 {{- end }}
+                ++__i)
+            {
+                var {action.arg1} = __index++;
                 
                 {{- for $i in 0..($count - 1) }}
                 {{ $entity }}.{{ component_name_at $i }} = ref __{{ component_name_at $i }};
                 {{- end }}
                 
-        #region Inlined lambda
                 {action.body}
-        #endregion
             }
         }
         """)]

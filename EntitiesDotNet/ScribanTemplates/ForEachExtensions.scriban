@@ -88,22 +88,13 @@ for $count in 1..type_parameters_count
         ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
         
-        for (var __first = true; __first; __first = false)
-        {
-    #region Inlined lambda
-            {func.body}
-    #endregion
-        }
-        
-        for (var __i = 1; __i < __count; ++__i)
-        {
+        for (var __i = 0; __i < __count;
             {{- for $i in 0..($count - 1) }}
-            {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
+            {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1),
             {{- end }}
-            
-    #region Inlined lambda
+            ++__i)
+        {
             {func.body}
-    #endregion
         }
     """)]
     public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, Func_{{ $suffix }}<{{ $type_parameters_str }}> func) {
@@ -140,25 +131,14 @@ for $count in 1..type_parameters_count
         ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(@this.GetSpan<{{ func_arg_type $i }}>());
         {{- end }}
         
-        for (var __first = true; __first; __first = false)
-        {
-            var {{ func_arg $count }} = 0;
-    #region Inlined lambda
-            {func.body}
-    #endregion
-        }
-        
-        for (var __i = 1; __i < __count; ++__i)
+        for (var __i = 0; __i < __count;
+            {{- for $i in 0..($count - 1) }}
+            {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1),
+            {{- end }}
+            ++__i)
         {
             var {{ func_arg $count }} = __i;
-            
-            {{- for $i in 0..($count - 1) }}
-            {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
-            {{- end }}
-            
-    #region Inlined lambda
             {func.body}
-    #endregion
         }
     """)]
     public static void ForEach<{{ $type_parameters_str }}>(this IComponentArray @this, Func_{{ $suffix }}_I<{{ $type_parameters_str }}> func) {
@@ -202,22 +182,13 @@ for $count in 1..type_parameters_count
             ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
             
-            for (var __first = true; __first; __first = false)
-            {
-    #region Inlined lambda
-                {func.body}
-    #endregion
-            }
-            
-            for (var __i = 1; __i < __count; ++__i)
-            {
+            for (var __i = 0; __i < __count;
                 {{- for $i in 0..($count - 1) }}
-                {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
+                {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1),
                 {{- end }}
-                
-    #region Inlined lambda
+                ++__i)
+            {
                 {func.body}
-    #endregion
             }
         }
     """)]
@@ -240,26 +211,14 @@ for $count in 1..type_parameters_count
             ref var {{ func_arg $i }} = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(__array.GetSpan<{{ func_arg_type $i }}>());
             {{- end }}
             
-            for (var __first = true; __first; __first = false)
-            {
-                var {{ func_arg $count }} = __index++;
-                
-    #region Inlined lambda
-                {func.body}
-    #endregion
-            }
-            
-            for (var __i = 1; __i < __count; ++__i)
-            {
-                var {{ func_arg $count }} = __index++;
-                
+            for (var __i = 1; __i < __count;
                 {{- for $i in 0..($count - 1) }}
-                {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1);
+                {{ func_arg $i }} = ref System.Runtime.CompilerServices.Unsafe.Add(ref {{ func_arg $i }}, 1),
                 {{- end }}
-                
-    #region Inlined lambda
+                ++__i)
+            {
+                var {{ func_arg $count }} = __index++;
                 {func.body}
-    #endregion
             }
         }
     """)]
