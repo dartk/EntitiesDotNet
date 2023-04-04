@@ -1,11 +1,12 @@
 # EntitiesDotNet
 
-A [fast](#performance) and ergonomic general purpose Entity Component System library for .NET
+> **Warning**: This is an experimental project and it is not ready for production use.
+
+A fast and ergonomic general purpose Entity Component System library for .NET
 inspired
 by [Unity Entities](https://docs.unity3d.com/Packages/com.unity.entities@1.0/manual/index.html).
 
-> **Warning**: This is an experimental project and it is not ready for production use.
-
+- [Installation](#installation)
 - [ECS concepts](#ecs-concepts)
     - [Entity](#entity)
     - [Component](#component)
@@ -27,6 +28,23 @@ by [Unity Entities](https://docs.unity3d.com/Packages/com.unity.entities@1.0/man
     - [ForEach extensions inlining](#foreach-extensions-inlining-1)
 - [Inlining source generator](#inlining-source-generator)
 - [Performance](#performance)
+
+## Installation
+
+Add package [Dartk.EntitiesDotNet](https://www.nuget.org/packages/Dartk.EntitiesDotNet/).
+
+```
+dotnet add package Dartk.EntitiesDotNet --prerelease
+```
+
+(Optional) Add
+package [Dartk.EntitiesDotNet.Generators](https://www.nuget.org/packages/Dartk.EntitiesDotNet.Generators/)
+for [`EntityRef`](#iterating-over-components-using-entityref)
+and [`Inline`](#inlining-source-generator) source generators.
+
+```
+dotnet add package Dartk.EntitiesDotNet.Generators --prerelease
+```
 
 ## ECS concepts
 
@@ -619,7 +637,8 @@ void UpdateTranslation(in Velocity v, ref Translation t, float deltaTime)
 Following component systems are included in the benchmark:
 
 * `native` - uses native C++ arrays
-* `loop_native` - uses [foreach loop that calls unmanaged C++ function](#foreach-loop-with-unmanaged-function-call)
+* `loop_native` -
+  uses [foreach loop that calls unmanaged C++ function](#foreach-loop-with-unmanaged-function-call)
 * `loop` - uses [foreach loop](#foreach-loop)
 * `ext` - uses [`ForEach extensions`](#foreach-extensions)
 * `ext_inl` - uses [`inlined ForEach extensions`](#foreach-extensions-inlining)
