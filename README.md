@@ -1,13 +1,13 @@
 # EntitiesDotNet
 
-> **Warning**: This is an experimental project and it is not ready for production use.
+> **Warning**: This is an experimental project and is not ready for production use.
 
 A fast and ergonomic general purpose Entity Component System library for .NET
 inspired
 by [Unity Entities](https://docs.unity3d.com/Packages/com.unity.entities@1.0/manual/index.html).
 
 - [Installation](#installation)
-- [ECS concepts](#ecs-concepts)
+- [Entity Component System concepts](#entity-component-system-concepts)
     - [Entity](#entity)
     - [Component](#component)
     - [System](#system)
@@ -31,24 +31,21 @@ by [Unity Entities](https://docs.unity3d.com/Packages/com.unity.entities@1.0/man
 
 ## Installation
 
-Add package [Dartk.EntitiesDotNet](https://www.nuget.org/packages/Dartk.EntitiesDotNet/).
+Add prerelease package [Dartk.EntitiesDotNet](https://www.nuget.org/packages/Dartk.EntitiesDotNet/).
 
 ```
 dotnet add package Dartk.EntitiesDotNet --prerelease
 ```
 
-(Optional) Add
+(Optional) For [`EntityRef`](#iterating-over-components-using-entityref)
+and [`Inline`](#inlining-source-generator) source generators add prerelease
 package [Dartk.EntitiesDotNet.Generators](https://www.nuget.org/packages/Dartk.EntitiesDotNet.Generators/)
-for [`EntityRef`](#iterating-over-components-using-entityref)
-and [`Inline`](#inlining-source-generator) source generators.
 
 ```
 dotnet add package Dartk.EntitiesDotNet.Generators --prerelease
 ```
 
-## ECS concepts
-
-ECS stands for Entity Component System.
+## Entity Component System concepts
 
 ### Entity
 
@@ -70,7 +67,7 @@ Any function that manipulates entities.
 
 ### EntityId
 
-Structure that represents an Entity and used as a key to index entity's components
+A structure that represents an Entity and used as a key to index entity's components
 by [`EntityManager`](#entitymanager).
 
 ```c#
@@ -91,7 +88,7 @@ Assert.IsTrue(object.ReferenceEquals(archetype0, archetype1));
 
 ### IComponentArray
 
-Parallel arrays of components.
+An interface that provides access to parallel arrays of components.
 
 ```c#
 void UpdateTranslation(IComponentArray components, float deltaTime)
@@ -109,7 +106,7 @@ void UpdateTranslation(IComponentArray components, float deltaTime)
 }
 ```
 
-Equivalent method using [Read/Write.From](#foreach-loop):
+An equivalent method using [Read<...>.Write<...>.From](#foreach-loop):
 
 ```c#
 void UpdateTranslation(IComponentArray components, float deltaTime)
@@ -124,7 +121,7 @@ void UpdateTranslation(IComponentArray components, float deltaTime)
 
 ### EntityArrays
 
-A collection of `IComponentArray` component arrays.
+A collection of `IComponentArray` objects.
 
 ```c#
 void UpdateTranslation(EntityArrays entities, float deltaTime)
@@ -136,22 +133,22 @@ void UpdateTranslation(EntityArrays entities, float deltaTime)
 
 ### EntityManager
 
-Creates and destroys entities, stores entity components.
+Creates and destroys entities, stores components.
 
-Components are stored in a dictionary of `IComponentArray` indexed by `Archetype`.
-Property `Entities` returns [`EntityArrays`](#entityarrays) collection that holds all entities'
+Components are stored in a dictionary of `IComponentArray` objects indexed by `Archetype`.
+`Entities` property returns an [`EntityArrays`](#entityarrays) collection that holds all entities'
 components owned by the `EntityManager`.
 
 ```c#
 var entityManager = new EntityManager();
 
-// create entity with Velocity and translation components
+// creates entity with Velocity and Translation components
 var entity0 = entityManager.CreateEntity(Archetype<Velocity, Translation>.Instance);
 
-// create entity with Velocity and Translation components and set their values
+// creates entity with Velocity and Translation components and sets their values
 var entity1 = entityManager.CreateEntity(new Velocity(10), new Translation(0));
 
-// update translation
+// updates translation
 var deltaTime = 1f / 60f;
 entityManager.Entities.ForEach((in Velocity velocity, ref Translation translation) =>
 	translation += velocity * deltaTime);
@@ -159,7 +156,7 @@ entityManager.Entities.ForEach((in Velocity velocity, ref Translation translatio
 
 ### Entity
 
-Convenience structure, that contains `EntityId` and `EntityManager` and provides access to
+A convenience structure, that holds `EntityId` and `EntityManager` and provides easy access to
 components.
 
 ```c#
@@ -177,10 +174,10 @@ public readonly record struct Entity : IDisposable
 
 ## Iterating over components
 
-All of the examples below declare a component system as a static class `UpdateTranslationSystem`
-with a method `Execute(EntityArrays entityArrays, float deltaTime)` that for every entity
-in `EntityArrays` having `Velocity` and `Translation` components reads `Velocity` and
-updates `Translation`.
+All of the examples below declare a static class `UpdateTranslationSystem`
+with a method `Execute(EntityArrays entityArrays, float deltaTime)`
+that reads `Velocity` and updates `Translation` components for every entity in
+the `entityArrays` argument.
 
 ```c#
 static class UpdateTranslationSystem
@@ -191,7 +188,7 @@ static class UpdateTranslationSystem
 
 ### foreach loop
 
-`Read<TR0, TR1, ...>.Write<TW0, TW1, ...>.From()` method can be used to access spans of
+`Read<TR0, TR1, ...>.Write<TW0, TW1, ...>.From()` methods can be used to access spans of
 components (`Span<T>` or `ReadOnlySpan<T>`) from `EntityArrays` and `IComponentArray`. The result
 can be deconstructed into a count of elements followed by spans of the specified components.
 
@@ -239,8 +236,8 @@ static class UpdateTranslationSystem
 
 ### foreach loop with unmanaged function call
 
-`Read<TR0, TR1, ...>.Write<TW0, TW1, ...>.From()` method returns spans of components that can be
-passed to an unmanaged function.
+Spans of components that are returned from `Read<TR0, TR1, ...>.Write<TW0, TW1, ...>.From()` methods
+can be passed to an unmanaged function.
 
 ```c#
 static class UpdateTranslationSystem
@@ -269,7 +266,7 @@ static class UpdateTranslationSystem
 
 ### ForEach extensions
 
-`EntityArrays` and `IComponentArray` extension methods `ForEach` take one of
+`ForEach` extension methods for `EntityArrays` and `IComponentArray` take one of
 the `ForEach_RR..WW..<T0, T1, ...>` delegates to iterate over components.
 
 ```c#
@@ -293,7 +290,7 @@ static class UpdateTranslationSystem
 
 `ForEach` extension method calls can be [inlined](#inlining-source-generator).
 
-> **Info**: Inlining is the [fastest](#performance) way to iterate over components using C#.
+> **Info**: Inlining is the [fastest](#performance) way to iterate over components in managed code.
 
 ```c#
 static partial class UpdateTranslationSystem
@@ -349,13 +346,13 @@ static partial class UpdateTranslationSystem
 
 .NET 7 introduced
 [ref fields](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/ref#ref-fields)
-that can be used to reference entity's components.
+that can be used to access entity's components.
 
 > **Warning**: `ref fields` are not supported for runtime targets lower than .NET 7.
 
-Create a `ref partial struct` with `EntityRef` attribute containing mutable `ref` fields of
-component types (`ref` itself can be readonly but the field must be mutable). The struct must be
-public or internal to support [`ForEach` extension methods](#foreach-extensions-1)
+Create a `ref partial struct` with mutable `ref` fields of component types (`ref` itself can
+be readonly but the field must be mutable). Mark the struct with `[EntityRef]` attribute. The struct
+must be public or internal to support [`ForEach` extension methods](#foreach-extensions-1)
 for `EntityArrays` and `IComponentArray`.
 
 ```c#
@@ -420,9 +417,9 @@ static partial class UpdateTranslationSystem
 
 ### ForEach extensions inlining
 
-`ForEach` extension calls can be [inlined](#inlining-source-generator).
+`ForEach` extension method calls can be [inlined](#inlining-source-generator).
 
-> **Info**: Inlining is the [fastest](#performance) way to iterate over components using C#.
+> **Info**: Inlining is the [fastest](#performance) way to iterate over components in managed code.
 
 ```c#
 static partial class UpdateTranslationSystem
@@ -484,12 +481,12 @@ static partial class UpdateTranslationSystem
 
 ## Inlining source generator
 
-`EntitiesDotNet.Generators` includes a source generator that inlines a body of lambda that is
+`EntitiesDotNet.Generators` includes a source generator that inlines a body of a lambda that is
 passed to `ForEach` extension method ([for individual components](#foreach-extensions-inlining)
-and [EntityRefs](#foreach-extensions-inlining-1)). The inlined methods are allocation free
-and iterate over components with [near-native performance](#performance).
+and [EntityRefs](#foreach-extensions-inlining-1)). The inlined methods do not allocate memory on the
+heap and iterate over components with [near-native performance](#performance).
 
-We will look through the following example:
+Given the following code:
 
 ```c#
 static partial class InliningExample
@@ -508,14 +505,14 @@ static partial class InliningExample
 }
 ```
 
-Inlining generator will create a method called `SumPositiveIntegers` that will contain:
+Inlining generator will create a method called `SumPositiveIntegers` that will
 
-* Fast iteration over component spans from `EntityArrays`
+* iterate over component spans from `EntityArrays`
   using [InteropServices.MemoryMarshal.GetReference](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.memorymarshal.getreference)
   and [CompilerServices.Unsafe.Add](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.unsafe.add)
-  methods from `System.Runtime` namespace.
+  methods from `System.Runtime` namespace
 
-* Inlined lambda body with `return` statement substituted for `continue`.
+* inline the lambda body, substituting `return` statement for `continue` statement.
 
 Generated code:
 
@@ -585,19 +582,19 @@ For an inlined method to be generated following conditions must be met:
     // Inlined method name: 'InlinedSumPositiveIntegers'
     ```
 
-   If the attribute's argument `name` is null then the method name will be used with the following
-   rule:
+   If the attribute's argument `name` is null then the generated method name will be determined by
+   the following rule:
 
-   If the method name starts with an underscore, then the method name without the underscore will be
-   used.
+   If the original method's name starts with an underscore, then the name without an underscore will
+   be used.
 
     ```c#
     [Inline.Public] static int _SumPositiveIntegers(EntityArrays entities)
     // Inlined method name: 'SumPositiveIntegers'
     ```
 
-   If the method name does not start with an underscore, then the method name with `_Inlined`
-   at the end will be used.
+   If the original method's name does not start with an underscore, then the name with `_Inlined` at
+   the end will be used.
 
     ```c#
     [Inline.Public] static int SumPositiveIntegers(EntityArrays entities)
@@ -606,7 +603,7 @@ For an inlined method to be generated following conditions must be met:
 
 ## Performance
 
-The benchmark is measuring a performance of reading `Velocity` and updating `Translation`
+The following benchmark measured a performance of updating `Translation` from `Velocity`
 for `2 x N` entities.
 
 ```c#
@@ -634,24 +631,25 @@ void UpdateTranslation(in Velocity v, ref Translation t, float deltaTime)
 }
 ```
 
-Following component systems are included in the benchmark:
+Component systems included in the benchmark:
 
 * `native` - uses native C++ arrays
 * `loop_native` -
   uses [foreach loop that calls unmanaged C++ function](#foreach-loop-with-unmanaged-function-call)
 * `loop` - uses [foreach loop](#foreach-loop)
-* `ext` - uses [`ForEach extensions`](#foreach-extensions)
-* `ext_inl` - uses [`inlined ForEach extensions`](#foreach-extensions-inlining)
+* `ext` - uses [ForEach extensions](#foreach-extensions)
+* `ext_inl` - uses [inlined ForEach extensions](#foreach-extensions-inlining)
 * `ER_loop` - uses [EntityRef's](#iterating-over-components-using-entityref)
   [foreach loop](#foreach-loop-1)
 * `ER_ext` - uses [EntityRef's](#iterating-over-components-using-entityref)
-  [`ForEach extensions`](#foreach-extensions-1)
+  [ForEach extensions](#foreach-extensions-1)
 * `ER_ext_inl` - uses [EntityRef's](#iterating-over-components-using-entityref)
-  inlined [`ForEach extensions`](#foreach-extensions-1)
+  inlined [ForEach extensions](#foreach-extensions-1)
 
-Full code: [ComponentSystems.cs](./EntitiesDotNet.Benchmarks/ComponentSystems.cs)
+Full code of the component
+systems: [ComponentSystems.cs](./EntitiesDotNet.Benchmarks/ComponentSystems.cs)
 
-The results below were taken on a system:
+The benchmark was run on a system:
 
 ```
 BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19045.2728)
