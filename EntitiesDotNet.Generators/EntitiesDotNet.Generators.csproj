@@ -18,8 +18,8 @@
         <RepositoryUrl>https://github.com/dartk/EntitiesDotNet</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>C# ecs entity-component-system performance</PackageTags>
-        <PackageVersion>0.1.0-alpha3</PackageVersion>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageVersion>0.1.0-alpha9</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

@@ -19,7 +19,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>C# ecs entity-component-system performance</PackageTags>
-        <PackageVersion>0.1.0-alpha3</PackageVersion>
+        <PackageVersion>0.1.0-alpha9</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
