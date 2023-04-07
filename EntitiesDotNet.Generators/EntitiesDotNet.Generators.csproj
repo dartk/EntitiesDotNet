@@ -10,7 +10,7 @@
     <PropertyGroup>
         <PackageId>Dartk.EntitiesDotNet.Generators</PackageId>
         <Title>EntitiesDotNet.Generators</Title>
-        <Description>Generators for EntitiesDotNet</Description>
+        <Description>Source generators for EntitiesDotNet</Description>
         <Authors>Dmitry Artemkin</Authors>
         <Copyright>2023</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,7 +19,12 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>C# ecs entity-component-system performance</PackageTags>
         <PackageVersion>0.1.0-alpha3</PackageVersion>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
 
     <PropertyGroup>
         <IncludeBuildOutput>false</IncludeBuildOutput>
