@@ -79,4 +79,11 @@ public static partial class ComponentSystems
             UpdateTranslation(entity.Velocity, ref entity.Translation, deltaTime);
         }
     }
+
+
+    [GenerateSystem]
+    private static void UpdateTranslationSystem(ref Translation t, in Velocity v)
+    {
+        UpdateTranslation(v, ref t, 1f / 60f);
+    }
 }

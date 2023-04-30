@@ -16,7 +16,11 @@ public class EntitiesDotNetGenerator : IIncrementalGenerator
             WrapperStruct.AddAttributes(context);
             EntityRef.AddAttributes(context);
             Inlining.AddAttributes(context);
+            GenerateSystem.AddAttributes(context);
         });
+
+        var generateSystemProvider = GenerateSystem.CreateProvider(context);
+        context.RegisterImplementationSourceOutputForResult(generateSystemProvider);
 
         var entityRefProvider = EntityRef.CreateProvider(context);
         context.RegisterImplementationSourceOutputForResult(entityRefProvider!);

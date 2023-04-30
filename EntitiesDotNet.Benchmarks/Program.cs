@@ -139,6 +139,13 @@ public class UpdateTranslationBenchmark
     }
 
 
+    [Benchmark]
+    public void GenerateSystem()
+    {
+        ComponentSystems.UpdateTranslationSystem(this.Entities);
+    }
+
+
     private EntityManager _entityManager;
     private nint _nativeArrays;
     private EntityArrays Entities => this._entityManager.Entities;
