@@ -228,16 +228,6 @@ public static partial class EntityRefForEachExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static {{ name }}.Array From(IComponentArray array) => new (array);
 
-
-    [Pure]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static {{ name }}.ArrayList From(IReadOnlyList<IComponentArray> arrayList) => new (arrayList);
-
-
-    [Pure]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static {{ name }}.ArrayEnumerable From(IEnumerable<IComponentArray> arrayEnumerable) => new (arrayEnumerable);
-    
     
     public static Archetype Archetype => Archetype.Instance<{{ all_components | array.map "type" | array.join ", " }}>();
 
@@ -285,82 +275,36 @@ public static partial class EntityRefForEachExtensions
         public ref struct Enumerator {
             public Enumerator(Array array) {
                 this._index = -1;
-                this._array = array;
+                this._length = array.Length;
+                if (this._length == 0) return;
+
+                {{- for component in all_components }}
+                this.{{ component.name }} = ref Unsafe.Subtract(ref array.{{ component.name }}, 1);
+                {{- end }}
             }
 
 
-            private Array _array;
             private int _index;
+            private readonly int _length;
 
-
-            public bool MoveNext() {
-                return ++this._index < this._array.Length;
-            }
-
-
-            public {{ name }} Current => this._array[this._index];
-        }
-        
-    }
-    
-    
-    public readonly struct ArrayList {
-    
-        public ArrayList(IReadOnlyList<IComponentArray> arrayList) {
-            this._arrayList = arrayList;
-        }
-        
-        private readonly IReadOnlyList<IComponentArray> _arrayList;
-        
-        public Enumerator GetEnumerator() => new (this);
-        
-        
-        public ref struct Enumerator {
-        
-            public Enumerator(ArrayList arrayList) {
-                this._arrayList = arrayList._arrayList;
-                this._arrayIndex = -1;
-                this._itemIndex = -1;
-            }
-        
-            private readonly IReadOnlyList<IComponentArray> _arrayList;
-            private int _currentArrayLength;
-            private int _arrayIndex;
-            private int _itemIndex;
-            
             {{- for component in all_components }}
             private ref {{ component.type }} {{ component.name }};
             {{- end }}
-            
-            public bool MoveNext() {
-                if (++this._itemIndex < this._currentArrayLength) {
-                    {{- for component in all_components }}
-                    this.{{ component.name }} = ref Unsafe.Add(ref this.{{ component.name }}, 1);
-                    {{- end }}
-                    return true;
-                }
-                
-                while (this._itemIndex >= this._currentArrayLength) {
-                    ++this._arrayIndex;
-                    
-                    if (this._arrayIndex >= this._arrayList.Count) {
-                        return false;
-                    }
-                    
-                    var currentArray = this._arrayList[this._arrayIndex];
-                    this._itemIndex = 0;
-                    
-                    (this._currentArrayLength, {{ all_components | array.each @(do; ret ("var " + $0.name + "Span"); end) | array.join ", " }}) = {{ select_str }}.From(currentArray);
-                    {{- for component in all_components }}
-                    this.{{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}Span);
-                    {{- end }}
-                }
-                
-                return true;
+
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                {{- for component in all_components }}
+                this.{{ component.name }} = ref Unsafe.Add(ref this.{{ component.name }}, 1);
+                {{- end }}
+                return ++this._index < this._length;
             }
-            
+
+
             public {{ name }} Current
             {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get
                 {
                     {{ name }} result = default;
@@ -370,53 +314,8 @@ public static partial class EntityRefForEachExtensions
                     return result;
                 }
             }
-            
         }
         
-    }
-    
-    
-    public readonly struct ArrayEnumerable {
-        public ArrayEnumerable(IEnumerable<IComponentArray> arraySeq) {
-            this._arraySeq = arraySeq;
-        }
-        
-        private readonly IEnumerable<IComponentArray> _arraySeq;
-        
-        public Enumerator GetEnumerator() => new (this);
-        
-        
-        public ref struct Enumerator {
-        
-            public Enumerator(ArrayEnumerable arrayEnumerable) {
-                this._enumerator = arrayEnumerable._arraySeq.GetEnumerator();
-                this._index = -1;
-            }
-        
-            private readonly IEnumerator<IComponentArray> _enumerator;
-            private {{ name }}.Array _currentArray;
-            private int _index;
-            
-            public bool MoveNext() {
-                if (++this._index < this._currentArray.Length) {
-                    return true;
-                }
-                
-                while (this._index >= this._currentArray.Length) {
-                    if (!this._enumerator.MoveNext()) {
-                        return false;
-                    }
-                    
-                    this._currentArray = From(this._enumerator.Current);
-                    this._index = 0;
-                }
-                
-                return true;
-            }
-            
-            public {{ name }} Current => this._currentArray[this._index];
-            
-        }
     }
 
 }

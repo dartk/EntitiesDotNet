@@ -83,31 +83,6 @@ public class ComponentArrayTests
 
 
     [Fact]
-    public void FillArrayUsingQueryForEach()
-    {
-        var array = new ComponentArray(Archetype.Instance<Width, Height>());
-        array.Add(5);
-        Assert.Equal(5, array.Count);
-
-        var i = 0;
-        foreach (var item in WidthAndHeight.From(new[] { array }))
-        {
-            item.Width = i * 2;
-            item.Height = i * 3;
-            ++i;
-        }
-
-        this.Output.WriteLine(array.ToReadableString());
-
-        Assert.Equal(new Width[] { 0, 2, 4, 6, 8 },
-            array.GetReadOnlySpan<Width>().ToArray());
-
-        Assert.Equal(new Height[] { 0, 3, 6, 9, 12 },
-            array.GetReadOnlySpan<Height>().ToArray());
-    }
-
-
-    [Fact]
     public void FillArrayUsingQueryIndex()
     {
         var array = new EntitiesDotNet.ComponentArray(Archetype.Instance<Width, Height>());
@@ -144,6 +119,31 @@ public class ComponentArrayTests
             width = i * 2;
             height = i * 3;
         });
+
+        this.Output.WriteLine(array.ToReadableString());
+
+        Assert.Equal(new Width[] { 0, 2, 4, 6, 8 },
+            array.GetReadOnlySpan<Width>().ToArray());
+
+        Assert.Equal(new Height[] { 0, 3, 6, 9, 12 },
+            array.GetReadOnlySpan<Height>().ToArray());
+    }
+
+
+    [Fact]
+    public void FillArrayUsingEntityRef()
+    {
+        var array = new ComponentArray(Archetype.Instance<Width, Height>());
+        array.Add(5);
+        Assert.Equal(5, array.Count);
+
+        var i = 0;
+        foreach (var e in WidthAndHeight.From(array))
+        {
+            e.Width = i * 2;
+            e.Height = i * 3;
+            ++i;
+        }
 
         this.Output.WriteLine(array.ToReadableString());
 

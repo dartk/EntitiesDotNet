@@ -7,12 +7,13 @@ using EntitiesDotNet.Benchmarks;
 BenchmarkRunner.Run(typeof(UpdateTranslationBenchmark));
 
 
-[MemoryDiagnoser, RPlotExporter]
+[MemoryDiagnoser]
+[RPlotExporter]
 public class UpdateTranslationBenchmark
 {
     // [Params(10_000, 100_000, 1_000_000)]
-    [Params(100_000)]
-    public int N { get; set; }
+    [Params(1_000)]
+    public int N { get; set; } = 1_000;
 
 
     public const float DeltaTime = 1f / 30f;
@@ -112,6 +113,13 @@ public class UpdateTranslationBenchmark
 
 
     [Benchmark]
+    public void ER_loop()
+    {
+        ComponentSystems.ER_loop(this.Entities, DeltaTime);
+    }
+
+
+    [Benchmark]
     public void loop()
     {
         ComponentSystems.loop(this.Entities, DeltaTime);
@@ -129,20 +137,6 @@ public class UpdateTranslationBenchmark
     public void ER_ext()
     {
         ComponentSystems.ER_ext(this.Entities, DeltaTime);
-    }
-
-
-    [Benchmark]
-    public void ER_loop()
-    {
-        ComponentSystems.ER_loop(this.Entities, DeltaTime);
-    }
-
-
-    [Benchmark]
-    public void GenerateSystem()
-    {
-        ComponentSystems.UpdateTranslationSystem(this.Entities);
     }
 
 

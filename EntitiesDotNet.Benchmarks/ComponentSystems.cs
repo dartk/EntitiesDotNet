@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 
 namespace EntitiesDotNet.Benchmarks;
@@ -74,7 +75,8 @@ public static partial class ComponentSystems
 
     public static void ER_loop(EntityArrays entities, float deltaTime)
     {
-        foreach (var entity in UpdateTranslationEntity.From(entities))
+        foreach (var array in entities)
+        foreach (var entity in UpdateTranslationEntity.From(array))
         {
             UpdateTranslation(entity.Velocity, ref entity.Translation, deltaTime);
         }
