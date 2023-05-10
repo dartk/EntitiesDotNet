@@ -156,28 +156,25 @@ public static partial class EntityRefForEachExtensions
     {{ extensions_accessibility }} static void ForEach(this IComponentArray array, {{ full_name }}.Delegates.ForEach action)
     {
         var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
-        
         if (count == 0) return;
-        
-        var entity = new {{ full_name }}
+
+        {{ full_name }} entity = default;
+
+        {{- for component in all_components }}
+        ref var {{ component.name }}Ref = ref MemoryMarshal.GetReference({{ component.name }});
+        {{- end }}
+
+        for (var i = 0;
+            i < count;
+            {{- for component in all_components }}
+            {{ component.name }}Ref = ref Unsafe.Add(ref {{ component.name }}Ref, 1),
+            {{- end }}
+            ++i)
         {
             {{- for component in all_components }}
-            {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
+            entity.{{ component.name }} = ref {{ component.name }}Ref;
             {{- end }}
-        };
-        
-        action(entity);
-        
-        for (var i = 1; i < count; ++i)
-        {
-            {{- for component in read_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
-            {{- end }}
-            
-            {{- for component in write_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
-            {{- end }}
-            
+
             action(entity);
         }
     }
@@ -193,28 +190,25 @@ public static partial class EntityRefForEachExtensions
     private static void ForEach(this IComponentArray array, {{ full_name }}.Delegates.ForEach_I action, ref int index)
     {
         var (count, {{ all_components | array.map "name" | array.join ", " }}) = {{ select_str }}.From(array);
-        
         if (count == 0) return;
-        
-        var entity = new {{ full_name }}
+
+        {{ full_name }} entity = default;
+
+        {{- for component in all_components }}
+        ref var {{ component.name }}Ref = ref MemoryMarshal.GetReference({{ component.name }});
+        {{- end }}
+
+        for (var i = 0;
+            i < count;
+            {{- for component in all_components }}
+            {{ component.name }}Ref = ref Unsafe.Add(ref {{ component.name }}Ref, 1),
+            {{- end }}
+            ++i)
         {
             {{- for component in all_components }}
-            {{ component.name }} = ref MemoryMarshal.GetReference({{ component.name }}),
+            entity.{{ component.name }} = ref {{ component.name }}Ref;
             {{- end }}
-        };
-        
-        action(entity, index++);
-        
-        for (var i = 1; i < count; ++i)
-        {
-            {{- for component in read_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref Unsafe.AsRef(entity.{{ component.name }}), 1);
-            {{- end }}
-            
-            {{- for component in write_components }}
-            entity.{{ component.name }} = ref Unsafe.Add(ref entity.{{ component.name }}, 1);
-            {{- end }}
-            
+
             action(entity, index++);
         }
     }
