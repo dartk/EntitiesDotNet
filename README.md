@@ -290,7 +290,7 @@ static class UpdateTranslationSystem
 
 `ForEach` extension method calls can be [inlined](#inlining-source-generator).
 
-> **Info**: Inlining is the [fastest](#performance) way to iterate over components in managed code.
+> **Info**: This is one of the [fastest](#performance) ways to iterate over components
 
 ```c#
 static partial class UpdateTranslationSystem
@@ -369,8 +369,10 @@ static partial class UpdateTranslationSystem
 
 ## foreach loop
 
-EntityRef generator creates static methods `From(EntityArrays)` and `From(IComponentArray)` that
+EntityRef generator creates static method `From(IComponentArray)` that
 can be used with `foreach` loop:
+
+> **Info**: This is one of the [fastest](#performance) ways to iterate over components
 
 ```c#
 static partial class UpdateTranslationSystem
@@ -382,9 +384,10 @@ static partial class UpdateTranslationSystem
         public ref readonly Velocity Velocity;
     }
     
-    public static void Execute(EntityArrays entities, float deltaTime)
+    public static void Execute(EntityArrays entityArrays, float deltaTime)
     {
-        foreach (var entity in ThisEntity.From(entities))
+        foreach (var array in entityArrays)
+        foreach (var entity in ThisEntity.From(array))
         {
             entity.Translation += entity.Velocity * deltaTime;
         }
@@ -419,7 +422,7 @@ static partial class UpdateTranslationSystem
 
 `ForEach` extension method calls can be [inlined](#inlining-source-generator).
 
-> **Info**: Inlining is the [fastest](#performance) way to iterate over components in managed code.
+> **Info**: This is one of the [fastest](#performance) ways to iterate over components
 
 ```c#
 static partial class UpdateTranslationSystem
@@ -661,30 +664,30 @@ DefaultJob : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
 
 ### 2 x 1 000 Entities
 
-| Method      | N    |     Mean |     Error |    StdDev | Ratio | Allocated |
-|-------------|------|---------:|----------:|----------:|------:|----------:|
-| native      | 1000 | 1.594 μs | 0.0084 μs | 0.0074 μs |  1.00 |         - |
-| loop_native | 1000 | 1.847 μs | 0.0039 μs | 0.0035 μs |  1.16 |         - |
-| ext_inl     | 1000 | 1.905 μs | 0.0184 μs | 0.0163 μs |  1.20 |         - |
-| ER_ext_inl  | 1000 | 1.902 μs | 0.0112 μs | 0.0105 μs |  1.19 |         - |
-| loop        | 1000 | 2.201 μs | 0.0217 μs | 0.0182 μs |  1.38 |         - |
-| ext         | 1000 | 3.761 μs | 0.0453 μs | 0.0378 μs |  2.36 |     120 B |
-| ER_ext      | 1000 | 4.720 μs | 0.0464 μs | 0.0411 μs |  2.96 |     120 B |
-| ER_loop     | 1000 | 6.211 μs | 0.0675 μs | 0.0527 μs |  3.90 |         - |
+|      Method |     Mean |     Error |    StdDev | Ratio | Allocated |
+|------------ |---------:|----------:|----------:|------:|----------:|
+|      native | 1.612 μs | 0.0036 μs | 0.0032 μs |  1.00 |         - |
+| loop_native | 1.858 μs | 0.0019 μs | 0.0018 μs |  1.15 |         - |
+|     ext_inl | 1.963 μs | 0.0381 μs | 0.0408 μs |  1.22 |         - |
+|  ER_ext_inl | 1.926 μs | 0.0029 μs | 0.0027 μs |  1.19 |         - |
+|     ER_loop | 1.931 μs | 0.0070 μs | 0.0065 μs |  1.20 |         - |
+|        loop | 2.217 μs | 0.0072 μs | 0.0060 μs |  1.38 |         - |
+|         ext | 3.784 μs | 0.0480 μs | 0.0513 μs |  2.35 |     120 B |
+|      ER_ext | 4.028 μs | 0.0079 μs | 0.0070 μs |  2.50 |     120 B |
 
 ![](./Docs/1_000.png)
 
 ### 2 x 100 000 Entities
 
-| Method      | N      |     Mean |   Error |  StdDev | Ratio | Allocated |
-|-------------|--------|---------:|--------:|--------:|------:|----------:|
-| native      | 100000 | 169.3 μs | 0.51 μs | 0.48 μs |  1.00 |         - |
-| loop_native | 100000 | 164.5 μs | 0.37 μs | 0.33 μs |  0.97 |         - |
-| ext_inl     | 100000 | 172.0 μs | 0.46 μs | 0.43 μs |  1.02 |         - |
-| ER_ext_inl  | 100000 | 172.3 μs | 0.72 μs | 0.68 μs |  1.02 |         - |
-| loop        | 100000 | 203.5 μs | 0.61 μs | 0.54 μs |  1.20 |         - |
-| ext         | 100000 | 353.0 μs | 0.45 μs | 0.42 μs |  2.09 |     120 B |
-| ER_ext      | 100000 | 428.3 μs | 0.28 μs | 0.24 μs |  2.53 |     120 B |
-| ER_loop     | 100000 | 598.9 μs | 1.14 μs | 1.01 μs |  3.54 |         - |
+|      Method |     Mean |   Error |  StdDev | Ratio | Allocated |
+|------------ |---------:|--------:|--------:|------:|----------:|
+|      native | 173.3 μs | 0.58 μs | 0.49 μs |  1.00 |         - |
+| loop_native | 168.4 μs | 0.40 μs | 0.37 μs |  0.97 |         - |
+|     ext_inl | 174.4 μs | 1.76 μs | 1.37 μs |  1.01 |         - |
+|  ER_ext_inl | 174.7 μs | 0.53 μs | 0.44 μs |  1.01 |         - |
+|     ER_loop | 174.9 μs | 0.64 μs | 0.60 μs |  1.01 |         - |
+|        loop | 206.8 μs | 0.71 μs | 0.66 μs |  1.19 |         - |
+|         ext | 361.5 μs | 1.58 μs | 1.47 μs |  2.09 |     120 B |
+|      ER_ext | 415.8 μs | 1.01 μs | 0.94 μs |  2.40 |     120 B |
 
 ![](./Docs/100_000.png)
