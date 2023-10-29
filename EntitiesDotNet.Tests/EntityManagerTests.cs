@@ -18,15 +18,19 @@ public class EntityManagerTests
 
 
     [Fact]
-    public void Foo()
+    public void ChangeEntityArchetype()
     {
-        var manager = new EntitiesDotNet.EntityManager();
-        manager.CreateEntity(10);
-        manager.CreateEntity(12, 120.0f);
+        var manager = new EntityManager();
+        var entity = manager.CreateEntity(1, 12L, 12.3);
 
-        manager.Entities.ForEach((in int value, int index) =>
-            this.Output.WriteLine($"#{index}: {value}"));
+        Assert.Equal(entity.Archetype, Archetype<EntityId, int, long, double>.Instance);
 
-        this.Output.WriteLine(manager.ToReadableString());
+        entity.RemoveComponents<long, double>();
+        entity.AddComponents("My entity");
+
+        Assert.Equal(entity.Archetype, Archetype<EntityId, int, string>.Instance);
+
+        Assert.Equal(1, entity.RefRO<int>());
+        Assert.Equal("My entity", entity.RefRO<string>());
     }
 }

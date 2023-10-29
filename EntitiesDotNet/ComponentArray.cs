@@ -103,7 +103,7 @@ public partial class ComponentArray : IComponentArray
 
     public void Remove(int count = 1)
     {
-        if (this.Count <= count)
+        if (this.Count < count)
         {
             throw new ArgumentOutOfRangeException();
         }

@@ -1,9 +1,8 @@
 ﻿namespace EntitiesDotNet;
 
 
-public readonly record struct Entity : IDisposable
+public partial record struct Entity : IDisposable
 {
-
     public Entity(EntityManager entityManager, EntityId id)
     {
         this.Id = id;
@@ -14,9 +13,10 @@ public readonly record struct Entity : IDisposable
 
     public readonly EntityId Id;
     public readonly EntityManager EntityManager;
+    public Archetype Archetype => this.EntityManager.GetEntityArchetype(this.Id);
 
-    private readonly IComponentArray _array;
-    private readonly int _index;
+    private IComponentArray _array;
+    private int _index;
 
 
     public void Dispose()
@@ -25,15 +25,23 @@ public readonly record struct Entity : IDisposable
     }
 
 
-    public ref T RefRW<T>()
+    public readonly ref T RefRW<T>()
     {
         return ref this._array.GetSpan<T>()[this._index];
     }
 
 
-    public ref readonly T RefRO<T>()
+    public readonly ref readonly T RefRO<T>()
     {
         return ref this._array.GetReadOnlySpan<T>()[this._index];
+    }
+
+
+    public void SetArchetype(Archetype newArchetype)
+    {
+        var newLocation = this.EntityManager.SetEntityArchetype(this, newArchetype);
+        this._array = newLocation.Array;
+        this._index = newLocation.Index;
     }
 
 

@@ -1,0 +1,29 @@
+﻿{{- include '_Global.scriban' -}}
+namespace {{ root_namespace }};
+
+public partial record struct Entity
+{
+
+{{- for count in 1..type_parameters_count }}
+{{- last_index = count - 1 }}
+    {{- type_params = type_parameters_str count }}
+
+    public void AddComponents<{{ type_params }}>(
+        {{-
+            array_create 0 count |
+            array_map @(do; ret string_format "T{0} component{0} = default" $0; end) |
+            array.join ", "
+        }})
+    {
+        this.SetArchetype(this.Archetype.Add<{{ type_params }}>());
+        {{- for i in 0..(count - 1) }}
+        this.RefRW<T{{ i }}>() = component{{ i }};
+        {{- end }}
+    }
+
+    public void RemoveComponents<{{ type_params }}>() =>
+        this.SetArchetype(this.Archetype.Remove<{{ type_params }}>());
+
+{{- end }}
+
+}

@@ -66,16 +66,7 @@ public partial class EntityManager : IHasVersion
         var array = entityInfo.Array;
         var index = entityInfo.Index;
 
-        if (index == array.Count - 1)
-        {
-            array.Remove();
-        }
-        else
-        {
-            ComponentArray.CopyTo(array, array.Count - 1, array, index, 1);
-            var movedEntityId = array.GetReadOnlySpan<EntityId>()[index].Id;
-            this._entityInfoArray[movedEntityId].Index = index;
-        }
+        ComponentArrayRemoveEntity(array, index);
 
         if (array.Count == 0)
         {
@@ -85,6 +76,45 @@ public partial class EntityManager : IHasVersion
         entityInfo.Array = null;
         this._deadEntityIndices.Enqueue(entityInfo.Index);
     }
+
+
+    public EntityLocation SetEntityArchetype(EntityId entity, Archetype targetArchetype)
+    {
+        if (entity.Id >= this._entityInfoArray.Count)
+        {
+            throw new InvalidOperationException($"Entity [{entity}] does not exist.");
+        }
+
+        ref var entityInfo = ref this._entityInfoArray[entity.Id];
+        if (entityInfo.Array == null)
+        {
+            throw new InvalidOperationException($"Entity [{entity}] was destroyed.");
+        }
+
+        var sourceArray = entityInfo.Array;
+        var sourceIndex = entityInfo.Index;
+
+        if (sourceArray.Archetype == targetArchetype)
+        {
+            return new EntityLocation(sourceArray, sourceIndex);
+        }
+
+        var targetArray = (ComponentArray)this.GetArray(targetArchetype);
+        var targetIndex = targetArray.Count;
+
+        targetArray.Add();
+        ComponentArray.CopyTo(sourceArray, sourceIndex, targetArray, targetIndex, 1);
+        this.ComponentArrayRemoveEntity(sourceArray, sourceIndex);
+
+        entityInfo.Array = targetArray;
+        entityInfo.Index = targetIndex;
+
+        return new EntityLocation(targetArray, targetIndex);
+    }
+
+
+    public Archetype GetEntityArchetype(EntityId entityId) =>
+        this.GetEntityLocation(entityId).Array.Archetype;
 
 
     public EntityLocation GetEntityLocation(EntityId entityId)
@@ -167,6 +197,21 @@ public partial class EntityManager : IHasVersion
     private void IncreaseVersion()
     {
         ++this.Version;
+    }
+
+
+    private void ComponentArrayRemoveEntity(ComponentArray array, int index)
+    {
+        if (index == array.Count - 1)
+        {
+            array.Remove();
+        }
+        else
+        {
+            ComponentArray.CopyTo(array, array.Count - 1, array, index, 1);
+            var movedEntityId = array.GetReadOnlySpan<EntityId>()[index].Id;
+            this._entityInfoArray[movedEntityId].Index = index;
+        }
     }
 
 
