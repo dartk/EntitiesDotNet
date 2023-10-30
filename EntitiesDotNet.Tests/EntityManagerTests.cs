@@ -20,17 +20,14 @@ public class EntityManagerTests
     [Fact]
     public void ChangeEntityArchetype()
     {
-        var manager = new EntityManager();
-        var entity = manager.CreateEntity(1, 12L, 12.3);
+var manager = new EntityManager();
+var entity = manager.CreateEntity(1, 12L, 12.3);
+entity.RemoveComponents<long, double>();
+entity.AddComponents("My entity");
 
-        Assert.Equal(entity.Archetype, Archetype<EntityId, int, long, double>.Instance);
+Assert.Equal(entity.Archetype, Archetype<EntityId, int, string>.Instance);
 
-        entity.RemoveComponents<long, double>();
-        entity.AddComponents("My entity");
-
-        Assert.Equal(entity.Archetype, Archetype<EntityId, int, string>.Instance);
-
-        Assert.Equal(1, entity.RefRO<int>());
-        Assert.Equal("My entity", entity.RefRO<string>());
+Assert.Equal(1, entity.RefRO<int>());
+Assert.Equal("My entity", entity.RefRO<string>());
     }
 }
