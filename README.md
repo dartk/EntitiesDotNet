@@ -1,6 +1,7 @@
+> [!WARNING]
+>  This project exists for educational purposes only. Do not use it for anything else.
+ 
 # EntitiesDotNet
-
-> **Warning**: This is an experimental project and is not ready for production use.
 
 A fast and ergonomic general purpose Entity Component System library for .NET
 inspired
